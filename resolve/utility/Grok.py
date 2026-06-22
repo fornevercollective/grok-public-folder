@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Workspace -> Scripts -> Edit -> Grok Menu"""
+"""Workspace -> Scripts -> Grok (Utility — listed per page in Resolve)"""
 
 import subprocess
 import sys
@@ -213,10 +213,10 @@ if existing:
     win = existing
 else:
     win = dispatcher.AddWindow(
-        {"ID": win_id, "WindowTitle": "Grok Menu", "Geometry": [90, 90, 580, 580]},
+        {"ID": win_id, "WindowTitle": "Grok", "Geometry": [90, 90, 580, 580]},
         ui.VGroup([
-            ui.Label({"Text": "grok menu", "Weight": 0}),
-            ui.Label({"Text": f"bootstrap  scan  import  generate  |  {featured}", "Weight": 0}),
+            ui.Label({"Text": "grok", "Weight": 0}),
+            ui.Label({"Text": f"same menu on every page — bootstrap  scan  import  |  {featured}", "Weight": 0}),
             ui.HGroup([
                 ui.Button({"ID": "bootstrap", "Text": "Bootstrap"}),
                 ui.Button({"ID": "scan", "Text": "Scan Downloads"}),

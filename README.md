@@ -25,7 +25,7 @@ export XAI_API_KEY=your-key
 ./bin/startup --create-project   # 4K bins + timeline (Resolve open)
 ```
 
-Resolve: **Workspace → Scripts → Edit → Grok Menu**
+Resolve: **Workspace → Scripts → Grok** (on any page: Edit, Color, etc.)
 
 ## Startup project
 
@@ -69,7 +69,7 @@ python3 grok_story.py --beat act2_rising
 
 | Script | Path |
 |--------|------|
-| Grok Menu | Edit → Grok Menu (bootstrap, scan, import, generate) |
+| Grok | Scripts → Grok (bootstrap, scan, import, generate) |
 | Bridge | `bin/bridge` |
 | Scan Downloads | `bin/scan` |
 

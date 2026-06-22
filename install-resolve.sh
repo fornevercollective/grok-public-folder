@@ -3,12 +3,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 SCRIPTS="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts"
-EDIT_DEST="$SCRIPTS/Edit"
+UTIL_DEST="$SCRIPTS/Utility"
 
-# Utility scripts repeat under Comp / Edit / Color / Deliver on every page.
-# Install only under Edit so Grok appears once: Workspace -> Scripts -> Edit -> Grok Menu
+# Resolve lists Utility scripts under Scripts on every page (Comp/Edit/Color/Deliver).
+# One file "Grok.py" — same entry on each page, not separate scripts.
 
 GROK_NAMES=(
+  "Grok.py"
   "Grok Menu.py"
   "Grok Bootstrap.lua"
   "Grok Console.py"
@@ -28,10 +29,9 @@ for dir in Utility Comp Tool Edit Color Deliver Fairlight; do
   rm -rf "$target/__pycache__"
 done
 
-mkdir -p "$EDIT_DEST"
-cp "$ROOT/resolve/edit/Grok Menu.py" "$EDIT_DEST/"
-chmod +x "$EDIT_DEST/Grok Menu.py" 2>/dev/null || true
+mkdir -p "$UTIL_DEST"
+cp "$ROOT/resolve/utility/Grok.py" "$UTIL_DEST/"
+chmod +x "$UTIL_DEST/Grok.py" 2>/dev/null || true
 
-echo "installed grok resolve script to"
-echo "$EDIT_DEST/Grok Menu.py"
-echo "open: Workspace -> Scripts -> Edit -> Grok Menu"
+echo "installed $UTIL_DEST/Grok.py"
+echo "Workspace -> Scripts -> Grok (under Comp / Edit / Color / Deliver on each page)"

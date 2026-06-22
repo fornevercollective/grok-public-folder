@@ -56,7 +56,7 @@ def connection_help() -> str:
             "  may not show it at all (Video Plugins is a different page).",
             "",
             "use Resolve Free workflow (no Terminal link needed):",
-            "  Workspace → Scripts → Edit → Grok Menu → Bootstrap",
+            "  Workspace → Scripts → Grok → Bootstrap",
             "",
             "Resolve Studio only (paid license):",
             "  Preferences → System → General → External scripting using → Local",
