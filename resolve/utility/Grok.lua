@@ -57,23 +57,34 @@ local function choose_action()
     return run_menu_ui("choose")
 end
 
+local function parse_field(line, key)
+    if line:sub(1, #key + 1) == key .. ":" then
+        return trim(line:sub(#key + 2))
+    end
+    return nil
+end
+
 local function prompt_generate()
     local output = run_menu_ui("generate")
     if not output then
-        return nil, nil
+        return nil
     end
-    local slug, prompt
+    local result = {}
     for line in output:gmatch("[^\r\n]+") do
-        if line:match("^SLUG:") then
-            slug = trim(line:gsub("^SLUG:", ""))
-        elseif line:match("^PROMPT:") then
-            prompt = trim(line:gsub("^PROMPT:", ""))
+        for _, key in ipairs({
+            "SLUG", "PROMPT", "DURATION", "RESOLUTION", "ASPECT",
+            "LUT", "PROMPT_ADD", "CONTINUITY",
+        }) do
+            local value = parse_field(line, key)
+            if value then
+                result[key] = value
+            end
         end
     end
-    if not slug or not prompt or slug == "" or prompt == "" then
-        return nil, nil
+    if not result.SLUG or not result.PROMPT or result.SLUG == "" or result.PROMPT == "" then
+        return nil
     end
-    return slug, prompt
+    return result
 end
 
 local function open_terminal(command)
@@ -90,14 +101,42 @@ local function run_python_background(subcmd)
 end
 
 local function action_generate()
-    local slug, prompt = prompt_generate()
-    if not slug then
+    local opts = prompt_generate()
+    if not opts then
         alert("Grok", "Generate cancelled")
         return
     end
 
-    local gen_cmd = GROK_ROOT .. "/bin/generate --slug '" .. slug:gsub("'", "'\\''") ..
-        "' --prompt '" .. prompt:gsub("'", "'\\''") .. "'"
+    local parts = {
+        GROK_ROOT .. "/bin/generate",
+        "--slug", shell_quote(opts.SLUG),
+        "--prompt", shell_quote(opts.PROMPT),
+    }
+    if opts.DURATION and opts.DURATION ~= "" then
+        table.insert(parts, "--duration")
+        table.insert(parts, shell_quote(opts.DURATION))
+    end
+    if opts.RESOLUTION and opts.RESOLUTION ~= "" then
+        table.insert(parts, "--resolution")
+        table.insert(parts, shell_quote(opts.RESOLUTION))
+    end
+    if opts.ASPECT and opts.ASPECT ~= "" then
+        table.insert(parts, "--aspect")
+        table.insert(parts, shell_quote(opts.ASPECT))
+    end
+    if opts.LUT and opts.LUT ~= "" then
+        table.insert(parts, "--lut")
+        table.insert(parts, shell_quote(opts.LUT))
+    end
+    if opts.PROMPT_ADD and opts.PROMPT_ADD ~= "" then
+        table.insert(parts, "--prompt-add")
+        table.insert(parts, shell_quote(opts.PROMPT_ADD))
+    end
+    if opts.CONTINUITY and opts.CONTINUITY ~= "" then
+        table.insert(parts, "--continuity")
+        table.insert(parts, shell_quote(opts.CONTINUITY))
+    end
+    local gen_cmd = table.concat(parts, " ")
     open_terminal(gen_cmd)
     notify("Terminal opened — set XAI_API_KEY if needed")
     alert("Grok", "Terminal opened for generate.\n\nIf nothing runs:\nexport XAI_API_KEY=your-key\n\n" .. gen_cmd)

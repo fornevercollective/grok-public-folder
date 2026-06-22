@@ -2,19 +2,6 @@ import AppKit
 import Foundation
 import ObjectiveC
 
-enum GrokTheme {
-    static let window = NSColor(calibratedRed: 0.137, green: 0.137, blue: 0.137, alpha: 1)
-    static let header = NSColor(calibratedRed: 0.102, green: 0.102, blue: 0.102, alpha: 1)
-    static let panel = NSColor(calibratedRed: 0.176, green: 0.176, blue: 0.176, alpha: 1)
-    static let row = NSColor(calibratedRed: 0.208, green: 0.208, blue: 0.208, alpha: 1)
-    static let rowHover = NSColor(calibratedRed: 0.255, green: 0.255, blue: 0.255, alpha: 1)
-    static let border = NSColor(calibratedRed: 0.24, green: 0.24, blue: 0.24, alpha: 1)
-    static let field = NSColor(calibratedRed: 0.118, green: 0.118, blue: 0.118, alpha: 1)
-    static let text = NSColor(calibratedRed: 0.91, green: 0.91, blue: 0.91, alpha: 1)
-    static let muted = NSColor(calibratedRed: 0.55, green: 0.55, blue: 0.55, alpha: 1)
-    static let accent = NSColor(calibratedRed: 1.0, green: 0.467, blue: 0.0, alpha: 1)
-}
-
 enum MenuItems {
     static let all = [
         "Bootstrap",
@@ -35,6 +22,8 @@ final class GrokApp: NSObject, NSApplicationDelegate {
     private var promptDefault = ""
     private var alertTitle = "Grok"
     private var alertMessage = ""
+    private var generateController: GeneratePanelController?
+    private var windowClosers: [WindowCloser] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let args = CommandLine.arguments.dropFirst()
@@ -50,6 +39,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
             promptDefault = args.dropFirst().dropFirst().joined(separator: " ")
             showPrompt()
         case "generate":
+            ensureCatalog()
             showGenerateForm()
         case "alert":
             alertTitle = args.dropFirst().first ?? "Grok"
@@ -57,6 +47,26 @@ final class GrokApp: NSObject, NSApplicationDelegate {
             showAlert()
         default:
             finish()
+        }
+    }
+
+    private func ensureCatalog() {
+        let catalogURL = GrokPaths.catalogURL
+        let builder = GrokPaths.root.appendingPathComponent("grok_generate_catalog.py")
+        if !FileManager.default.fileExists(atPath: catalogURL.path)
+            || (try? builder.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
+                .map({ mod in
+                    (try? catalogURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate)
+                        .map { $0 < mod } ?? true
+                }) ?? true {
+            let python = "/usr/bin/env"
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: python)
+            task.arguments = ["python3", builder.path]
+            task.standardOutput = FileHandle.nullDevice
+            task.standardError = FileHandle.nullDevice
+            try? task.run()
+            task.waitUntilExit()
         }
     }
 
@@ -70,10 +80,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
 
     private func makeWindow(width: CGFloat, height: CGFloat, title: String) -> NSWindow {
         let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
-        let origin = NSPoint(
-            x: screen.midX - width / 2,
-            y: screen.midY - height / 2
-        )
+        let origin = NSPoint(x: screen.midX - width / 2, y: screen.midY - height / 2)
         let window = NSWindow(
             contentRect: NSRect(origin: origin, size: NSSize(width: width, height: height)),
             styleMask: [.titled, .closable, .fullSizeContentView],
@@ -89,45 +96,6 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         return window
     }
 
-    private func headerView(title: String, subtitle: String) -> NSView {
-        let container = NSView()
-        container.translatesAutoresizingMaskIntoConstraints = false
-        container.wantsLayer = true
-        container.layer?.backgroundColor = GrokTheme.header.cgColor
-
-        let accent = NSView()
-        accent.translatesAutoresizingMaskIntoConstraints = false
-        accent.wantsLayer = true
-        accent.layer?.backgroundColor = GrokTheme.accent.cgColor
-
-        let titleLabel = NSTextField(labelWithString: title.uppercased())
-        titleLabel.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
-        titleLabel.textColor = GrokTheme.text
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let subtitleLabel = NSTextField(labelWithString: subtitle)
-        subtitleLabel.font = NSFont.systemFont(ofSize: 11, weight: .regular)
-        subtitleLabel.textColor = GrokTheme.muted
-        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        container.addSubview(accent)
-        container.addSubview(titleLabel)
-        container.addSubview(subtitleLabel)
-
-        NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalToConstant: 52),
-            accent.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            accent.topAnchor.constraint(equalTo: container.topAnchor),
-            accent.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            accent.widthAnchor.constraint(equalToConstant: 3),
-            titleLabel.leadingAnchor.constraint(equalTo: accent.trailingAnchor, constant: 12),
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 12),
-            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
-        ])
-        return container
-    }
-
     private func actionButton(_ title: String, action: Selector) -> NSButton {
         let button = ResolveActionButton(title: title)
         button.target = self
@@ -140,7 +108,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let header = headerView(title: "Grok", subtitle: "Resolve workflow")
+        let header = UIHelpers.headerView(title: "Grok", subtitle: "Resolve workflow")
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.spacing = 2
@@ -189,21 +157,17 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let header = headerView(title: promptTitle, subtitle: "Enter value")
+        let header = UIHelpers.headerView(title: promptTitle, subtitle: "Enter value")
         let field = NSTextField(string: promptDefault)
-        styleField(field)
+        UIHelpers.styleField(field)
 
-        let cancel = flatButton("Cancel", accent: false)
-        cancel.action = #selector(cancelPressed)
-        let ok = flatButton("OK", accent: true)
+        let cancel = UIHelpers.flatButton("Cancel", accent: false, target: self, action: #selector(cancelPressed))
+        let ok = UIHelpers.flatButton("OK", accent: true, target: self, action: #selector(promptOK))
         ok.keyEquivalent = "\r"
-        ok.action = #selector(promptOK(_:))
-        ok.tag = 1
 
         let buttonRow = NSStackView(views: [cancel, ok])
         buttonRow.orientation = .horizontal
         buttonRow.spacing = 8
-        buttonRow.alignment = .centerY
         buttonRow.translatesAutoresizingMaskIntoConstraints = false
 
         root.addSubview(header)
@@ -227,92 +191,26 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         window.makeFirstResponder(field)
     }
 
-    @objc private func promptOK(_ sender: NSButton) {
+    @objc private func promptOK() {
         guard let window = NSApp.keyWindow,
               let field = objc_getAssociatedObject(window, "promptField") as? NSTextField else {
             finish()
             return
         }
         let value = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        if value.isEmpty {
-            resultLine = "CANCELLED"
-        } else {
-            resultLine = value
-        }
+        resultLine = value.isEmpty ? "CANCELLED" : value
         finish()
     }
 
     private func showGenerateForm() {
-        let window = makeWindow(width: 460, height: 280, title: "Generate Video")
-        let root = NSView()
-        root.translatesAutoresizingMaskIntoConstraints = false
-
-        let header = headerView(title: "Generate Video", subtitle: "Imagine preset + prompt")
-        let slugLabel = fieldLabel("Preset slug")
-        let slugField = NSTextField(string: "neo-noir")
-        styleField(slugField)
-        let promptLabel = fieldLabel("Prompt")
-        let promptField = NSTextField(string: "woman in rain on empty street at night")
-        styleField(promptField)
-
-        let cancel = flatButton("Cancel", accent: false)
-        cancel.action = #selector(cancelPressed)
-        let ok = flatButton("Generate", accent: true)
-        ok.keyEquivalent = "\r"
-        ok.action = #selector(generateOK)
-
-        let buttonRow = NSStackView(views: [cancel, ok])
-        buttonRow.orientation = .horizontal
-        buttonRow.spacing = 8
-        buttonRow.translatesAutoresizingMaskIntoConstraints = false
-
-        root.addSubview(header)
-        root.addSubview(slugLabel)
-        root.addSubview(slugField)
-        root.addSubview(promptLabel)
-        root.addSubview(promptField)
-        root.addSubview(buttonRow)
-        window.contentView = root
-        objc_setAssociatedObject(window, "slugField", slugField, .OBJC_ASSOCIATION_RETAIN)
-        objc_setAssociatedObject(window, "promptField", promptField, .OBJC_ASSOCIATION_RETAIN)
-
-        NSLayoutConstraint.activate([
-            header.topAnchor.constraint(equalTo: root.topAnchor, constant: 18),
-            header.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            header.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            slugLabel.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 14),
-            slugLabel.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 14),
-            slugField.topAnchor.constraint(equalTo: slugLabel.bottomAnchor, constant: 4),
-            slugField.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 14),
-            slugField.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -14),
-            promptLabel.topAnchor.constraint(equalTo: slugField.bottomAnchor, constant: 12),
-            promptLabel.leadingAnchor.constraint(equalTo: slugLabel.leadingAnchor),
-            promptField.topAnchor.constraint(equalTo: promptLabel.bottomAnchor, constant: 4),
-            promptField.leadingAnchor.constraint(equalTo: slugField.leadingAnchor),
-            promptField.trailingAnchor.constraint(equalTo: slugField.trailingAnchor),
-            buttonRow.topAnchor.constraint(equalTo: promptField.bottomAnchor, constant: 16),
-            buttonRow.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -14),
-        ])
-
-        present(window)
-        window.makeFirstResponder(slugField)
-    }
-
-    @objc private func generateOK() {
-        guard let window = NSApp.keyWindow,
-              let slugField = objc_getAssociatedObject(window, "slugField") as? NSTextField,
-              let promptField = objc_getAssociatedObject(window, "promptField") as? NSTextField else {
-            finish()
-            return
+        let catalog = CatalogStore.load()
+        let controller = GeneratePanelController(catalog: catalog)
+        generateController = controller
+        controller.onComplete = { [weak self] output in
+            self?.resultLine = output
+            self?.finish()
         }
-        let slug = slugField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        let prompt = promptField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        if slug.isEmpty || prompt.isEmpty {
-            resultLine = "CANCELLED"
-        } else {
-            resultLine = "SLUG:\(slug)\nPROMPT:\(prompt)"
-        }
-        finish()
+        controller.show()
     }
 
     private func showAlert() {
@@ -320,15 +218,14 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let header = headerView(title: alertTitle, subtitle: "Grok")
+        let header = UIHelpers.headerView(title: alertTitle, subtitle: "Grok")
         let body = NSTextField(wrappingLabelWithString: alertMessage)
         body.font = NSFont.systemFont(ofSize: 12)
         body.textColor = GrokTheme.text
         body.translatesAutoresizingMaskIntoConstraints = false
 
-        let ok = flatButton("OK", accent: true)
+        let ok = UIHelpers.flatButton("OK", accent: true, target: self, action: #selector(alertOK))
         ok.keyEquivalent = "\r"
-        ok.action = #selector(alertOK)
 
         root.addSubview(header)
         root.addSubview(body)
@@ -360,7 +257,9 @@ final class GrokApp: NSObject, NSApplicationDelegate {
     }
 
     private func present(_ window: NSWindow) {
-        window.delegate = WindowCloser(delegate: self)
+        let closer = WindowCloser(delegate: self)
+        windowClosers.append(closer)
+        window.delegate = closer
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -369,40 +268,6 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         guard !didFinish else { return }
         resultLine = "CANCELLED"
         finish()
-    }
-
-    private func fieldLabel(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = NSFont.systemFont(ofSize: 11, weight: .medium)
-        label.textColor = GrokTheme.muted
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }
-
-    private func styleField(_ field: NSTextField) {
-        field.font = NSFont.systemFont(ofSize: 12)
-        field.textColor = GrokTheme.text
-        field.backgroundColor = GrokTheme.field
-        field.isBordered = true
-        field.isBezeled = true
-        field.bezelStyle = .squareBezel
-        field.focusRingType = .none
-        field.translatesAutoresizingMaskIntoConstraints = false
-    }
-
-    private func flatButton(_ title: String, accent: Bool) -> NSButton {
-        let button = NSButton(title: title, target: self, action: nil)
-        button.bezelStyle = .inline
-        button.isBordered = false
-        button.wantsLayer = true
-        button.layer?.backgroundColor = (accent ? GrokTheme.accent : GrokTheme.row).cgColor
-        button.layer?.cornerRadius = 3
-        button.contentTintColor = accent ? NSColor.black : GrokTheme.text
-        button.font = NSFont.systemFont(ofSize: 12, weight: accent ? .semibold : .regular)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.widthAnchor.constraint(greaterThanOrEqualToConstant: 84).isActive = true
-        button.heightAnchor.constraint(equalToConstant: 26).isActive = true
-        return button
     }
 }
 
@@ -466,8 +331,3 @@ final class ResolveActionButton: NSButton {
     }
 }
 
-let app = NSApplication.shared
-app.setActivationPolicy(.accessory)
-let grok = GrokApp()
-app.delegate = grok
-app.run()

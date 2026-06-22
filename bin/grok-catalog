@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT" || exit 1
+exec python3 "$ROOT/grok_generate_catalog.py" "$@"

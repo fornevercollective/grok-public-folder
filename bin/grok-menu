@@ -2,20 +2,32 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SRC="$ROOT/resolve/ui/GrokMenu.swift"
+UI_DIR="$ROOT/resolve/ui"
 BIN="$ROOT/bin/grok-menu-ui"
+export GROK_PUBLIC_FOLDER="$ROOT"
 
-if [[ ! -f "$SRC" ]]; then
-  echo "missing $SRC" >&2
+if [[ ! -f "$UI_DIR/GrokMenu.swift" ]]; then
+  echo "missing $UI_DIR/GrokMenu.swift" >&2
   exit 1
 fi
 
-if [[ ! -x "$BIN" ]] || [[ "$SRC" -nt "$BIN" ]]; then
-  swiftc -O -o "$BIN" "$SRC" -framework AppKit 2>/dev/null || true
+if [[ ! -f "$ROOT/project/generate-ui.json" ]] \
+  || [[ "$ROOT/grok_generate_catalog.py" -nt "$ROOT/project/generate-ui.json" ]]; then
+  python3 "$ROOT/grok_generate_catalog.py" >/dev/null 2>&1 || true
+fi
+
+mapfile -t SOURCES < <(find "$UI_DIR" -maxdepth 1 -name '*.swift' | sort)
+NEWEST_SRC="$(find "${SOURCES[@]}" -maxdepth 0 -print0 2>/dev/null | xargs -0 stat -f '%m %N' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)"
+if [[ -z "${NEWEST_SRC:-}" ]]; then
+  NEWEST_SRC="$UI_DIR/GrokMenu.swift"
+fi
+
+if [[ ! -x "$BIN" ]] || [[ "$NEWEST_SRC" -nt "$BIN" ]]; then
+  swiftc -O -o "$BIN" "${SOURCES[@]}" -framework AppKit 2>/dev/null || true
 fi
 
 if [[ -x "$BIN" ]]; then
   exec "$BIN" "$@"
 fi
 
-exec /usr/bin/swift "$SRC" "$@"
+exec /usr/bin/swift "${SOURCES[@]}" "$@"

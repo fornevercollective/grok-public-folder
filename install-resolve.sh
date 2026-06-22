@@ -34,8 +34,11 @@ mkdir -p "$UTIL_DEST"
 cp "$ROOT/resolve/utility/Grok.lua" "$UTIL_DEST/"
 xattr -cr "$UTIL_DEST/Grok.lua" 2>/dev/null || true
 
-if [[ -f "$ROOT/resolve/ui/GrokMenu.swift" ]]; then
-  swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT/resolve/ui/GrokMenu.swift" -framework AppKit 2>/dev/null || true
+if [[ -f "$ROOT/grok_generate_catalog.py" ]]; then
+  python3 "$ROOT/grok_generate_catalog.py" >/dev/null 2>&1 || true
+fi
+if compgen -G "$ROOT/resolve/ui/*.swift" >/dev/null; then
+  swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT"/resolve/ui/*.swift -framework AppKit 2>/dev/null || true
 fi
 
 echo "installed $UTIL_DEST/Grok.lua"

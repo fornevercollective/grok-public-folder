@@ -72,13 +72,26 @@ def cmd_generate(args: argparse.Namespace) -> int:
 
     slug = args.slug.strip()
     prompt = args.prompt.strip()
-    log(f"generate: slug={slug!r} prompt={prompt!r}")
+    log(
+        "generate: "
+        f"slug={slug!r} prompt={prompt!r} duration={args.duration} "
+        f"resolution={args.resolution} aspect={args.aspect_ratio} lut={args.lut!r}"
+    )
 
     try:
         api_key = require_api_key()
         config = load_startup_config()
         gen = config.get("generation", {})
-        composed = compose_prompt(slug, base_prompt=prompt)
+        prompt_add = args.prompt_add.strip()
+        if args.lut.strip():
+            lut_style = compose_prompt(args.lut.strip(), base_prompt="")
+            prompt_add = ". ".join(p for p in (prompt_add, lut_style) if p)
+        composed = compose_prompt(
+            slug,
+            base_prompt=prompt,
+            prompt_add=prompt_add,
+            continuity_notes=args.continuity.strip(),
+        )
         log(f"generate: composed prompt ({len(composed)} chars)")
         log("generate: calling xAI video API — this can take several minutes")
 
@@ -89,9 +102,9 @@ def cmd_generate(args: argparse.Namespace) -> int:
         path = generate_video(
             api_key,
             composed,
-            duration=int(gen.get("duration_sec", 10)),
-            aspect_ratio=gen.get("aspect_ratio", "16:9"),
-            resolution=gen.get("resolution", "720p"),
+            duration=int(args.duration or gen.get("duration_sec", 10)),
+            aspect_ratio=args.aspect_ratio or gen.get("aspect_ratio", "16:9"),
+            resolution=args.resolution or gen.get("resolution", "720p"),
             on_status=on_status,
         )
     except Exception as exc:
@@ -120,6 +133,12 @@ def main() -> int:
     gen = sub.add_parser("generate", help="generate video with imagine slug")
     gen.add_argument("--slug", required=True)
     gen.add_argument("--prompt", default="")
+    gen.add_argument("--duration", type=int, default=0)
+    gen.add_argument("--resolution", default="")
+    gen.add_argument("--aspect", dest="aspect_ratio", default="")
+    gen.add_argument("--lut", default="")
+    gen.add_argument("--prompt-add", default="")
+    gen.add_argument("--continuity", default="")
 
     args = parser.parse_args()
     if args.cmd == "scan":
