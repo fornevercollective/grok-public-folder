@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 UI_DIR="$ROOT/resolve/ui"
 BIN="$ROOT/bin/grok-menu-ui"
+PLIST="$ROOT/resolve/ui/Info.plist"
 export GROK_PUBLIC_FOLDER="$ROOT"
 
 if [[ ! -f "$UI_DIR/GrokMenu.swift" ]]; then
@@ -16,19 +17,18 @@ if [[ ! -f "$ROOT/project/generate-ui.json" ]] \
   python3 "$ROOT/grok_generate_catalog.py" >/dev/null 2>&1 || true
 fi
 
-mapfile -t SOURCES < <(find "$UI_DIR" -maxdepth 1 -name '*.swift' | sort)
-NEWEST_SRC="$(find "${SOURCES[@]}" -maxdepth 0 -print0 2>/dev/null | xargs -0 stat -f '%m %N' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)"
-if [[ -z "${NEWEST_SRC:-}" ]]; then
-  NEWEST_SRC="$UI_DIR/GrokMenu.swift"
-fi
+needs_rebuild() {
+  [[ ! -x "$BIN" ]] && return 0
+  [[ -f "$PLIST" && "$PLIST" -nt "$BIN" ]] && return 0
+  find "$UI_DIR" -maxdepth 1 -name '*.swift' -newer "$BIN" -print -quit | grep -q .
+}
 
-PLIST="$ROOT/resolve/ui/Info.plist"
-if [[ ! -x "$BIN" ]] || [[ "$NEWEST_SRC" -nt "$BIN" ]] || [[ -f "$PLIST" && "$PLIST" -nt "$BIN" ]]; then
+if needs_rebuild; then
   if [[ -f "$PLIST" ]]; then
-    swiftc -O -o "$BIN" "${SOURCES[@]}" -framework AppKit \
+    swiftc -O -o "$BIN" "$UI_DIR"/*.swift -framework AppKit \
       -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker "$PLIST" 2>/dev/null || true
   else
-    swiftc -O -o "$BIN" "${SOURCES[@]}" -framework AppKit 2>/dev/null || true
+    swiftc -O -o "$BIN" "$UI_DIR"/*.swift -framework AppKit 2>/dev/null || true
   fi
 fi
 
@@ -36,4 +36,4 @@ if [[ -x "$BIN" ]]; then
   exec "$BIN" "$@"
 fi
 
-exec /usr/bin/swift "${SOURCES[@]}" "$@"
+exec /usr/bin/swift "$UI_DIR"/*.swift "$@"
