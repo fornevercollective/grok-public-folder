@@ -2,6 +2,8 @@
 
 Public folder for Grok media prompts and DaVinci Resolve workflow.
 
+**Docs:** https://fornevercollective.github.io/grok-public-folder/
+
 Repo: https://github.com/fornevercollective/grok-public-folder
 
 Local path: `/Users/tref/film/grok-public-folder`

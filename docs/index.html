@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grok + DaVinci Resolve</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --yellow: #d29922;
+      --code-bg: #1f2428;
+      --max: 760px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #111827 0%, var(--bg) 100%);
+      padding: 3rem 1.5rem 2rem;
+    }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
+    h1 { margin: 0 0 0.5rem; font-size: 2rem; letter-spacing: -0.02em; }
+    .lead { color: var(--muted); margin: 0; font-size: 1.05rem; }
+    main { padding: 2rem 0 4rem; }
+    h2 {
+      margin: 2.5rem 0 0.75rem;
+      font-size: 1.35rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+    h2:first-of-type { border-top: 0; margin-top: 0; }
+    h3 { margin: 1.5rem 0 0.5rem; font-size: 1.05rem; color: var(--accent); }
+    p, li { color: #c9d1d9; }
+    a { color: var(--accent); }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.9em;
+    }
+    code {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.1em 0.35em;
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 0.75rem 0 1rem;
+    }
+    pre code { background: none; border: 0; padding: 0; }
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .toc ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .note {
+      background: #1c2128;
+      border-left: 3px solid var(--yellow);
+      padding: 0.75rem 1rem;
+      border-radius: 0 6px 6px 0;
+      margin: 1rem 0;
+    }
+    .ok {
+      border-left-color: var(--green);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.55rem 0.75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--surface); }
+    footer {
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      padding: 2rem 1.5rem;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Grok + DaVinci Resolve</h1>
+      <p class="lead">
+        Use Grok Imagine media in Resolve Free via a public folder, in-app panel, and terminal bridge.
+        Repo: <a href="https://github.com/fornevercollective/grok-public-folder">fornevercollective/grok-public-folder</a>
+      </p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav class="toc">
+      <strong>On this page</strong>
+      <ul>
+        <li><a href="#what">What this is</a></li>
+        <li><a href="#requirements">Requirements</a></li>
+        <li><a href="#install">Install</a></li>
+        <li><a href="#panel">Grok Panel (recommended)</a></li>
+        <li><a href="#bridge">Terminal bridge</a></li>
+        <li><a href="#console">Resolve console</a></li>
+        <li><a href="#scan">Downloads scan</a></li>
+        <li><a href="#folders">Folder layout</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+      </ul>
+    </nav>
+
+    <section id="what">
+      <h2>What this is</h2>
+      <p>
+        This tool connects Grok-generated images and video to your Resolve project without needing
+        Resolve Studio or the Higgsfield Workflow Integration plugin.
+      </p>
+      <p>Typical flow:</p>
+      <ol>
+        <li>Generate or download Grok media.</li>
+        <li>Files land in <code>video/</code> or <code>image/</code> inside your public folder.</li>
+        <li>Import into the <strong>active bin</strong> you have selected in the Media Pool.</li>
+      </ol>
+      <div class="note ok">
+        Works on <strong>Resolve Free</strong> using Utility scripts under
+        <code>Workspace → Scripts → Utility</code>.
+      </div>
+    </section>
+
+    <section id="requirements">
+      <h2>Requirements</h2>
+      <ul>
+        <li>macOS (tested; metadata scan uses macOS download tags)</li>
+        <li>DaVinci Resolve with Fusion scripting enabled</li>
+        <li>Python 3 on your Mac</li>
+        <li>xAI API key for chat and generation: <code>export XAI_API_KEY=your-key</code></li>
+        <li>A clone of this repo on disk</li>
+      </ul>
+      <div class="note">
+        The Higgsfield <code>.pkg</code> plugin is a separate Studio-only Workflow Integration.
+        This project is the Resolve Free workaround: folder + scripts + terminal bridge.
+      </div>
+    </section>
+
+    <section id="install">
+      <h2>Install</h2>
+      <h3>1. Clone the repo</h3>
+      <pre><code>git clone https://github.com/fornevercollective/grok-public-folder.git
+cd grok-public-folder</code></pre>
+
+      <h3>2. Pick your folder path</h3>
+      <p>
+        Scripts default to <code>/Users/tref/film/grok-public-folder</code>. After cloning elsewhere,
+        either clone to that path or update paths in:
+      </p>
+      <ul>
+        <li><code>resolve/utility/Grok Panel.py</code> — <code>GROK_ROOT</code></li>
+        <li><code>resolve/lua/grok_resolve.lua</code> — <code>ARTIFACTS</code></li>
+        <li><code>resolve/lua/grok_bridge.lua</code> — <code>BRIDGE</code></li>
+      </ul>
+      <p>
+        Python tools also respect <code>GROK_PUBLIC_FOLDER</code> if set before running
+        <code>bin/grok</code>, <code>bin/bridge</code>, or <code>bin/scan</code>.
+      </p>
+
+      <h3>3. Install Resolve Utility scripts</h3>
+      <pre><code>chmod +x install-resolve.sh
+./install-resolve.sh</code></pre>
+      <p>
+        Copies scripts into
+        <code>~/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Utility/</code>.
+        Restart Resolve or reload scripts if the menu does not update immediately.
+      </p>
+
+      <h3>4. Add the folder to Media Storage (optional)</h3>
+      <p>
+        In Resolve: <code>DaVinci Resolve → Preferences → Media Storage</code>, add your
+        <code>grok-public-folder</code> path so you can browse <code>video/</code> and
+        <code>image/</code> directly.
+      </p>
+    </section>
+
+    <section id="panel">
+      <h2>Grok Panel (recommended)</h2>
+      <p>Open inside Resolve — no floating Terminal window required.</p>
+      <pre><code>Workspace → Scripts → Utility → Grok Panel</code></pre>
+
+      <table>
+        <thead>
+          <tr><th>Button</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Scan Downloads</strong></td>
+            <td>Finds Grok downloads in <code>~/Downloads</code> via macOS URL metadata, asks Yes/No, then moves into <code>video/</code> or <code>image/</code>.</td>
+          </tr>
+          <tr>
+            <td><strong>Import</strong></td>
+            <td>Imports all media from the public folder into the <strong>active Media Pool bin</strong>.</td>
+          </tr>
+          <tr>
+            <td><strong>Preview</strong></td>
+            <td>Opens the latest files in Finder/Preview.</td>
+          </tr>
+          <tr>
+            <td><strong>Refresh</strong></td>
+            <td>Updates the inventory list in the panel.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="note">
+        Select your target bin in the Media Pool <em>before</em> clicking Import.
+        Thumbnails appear after import.
+      </div>
+    </section>
+
+    <section id="bridge">
+      <h2>Terminal bridge</h2>
+      <p>
+        Lets the Resolve Lua or Python console talk to Grok for chat, image, and video generation.
+        Resolve writes requests to <code>bridge/request.json</code>; Terminal writes responses to
+        <code>bridge/response.json</code>.
+      </p>
+
+      <h3>Start the bridge (Terminal)</h3>
+      <pre><code>export XAI_API_KEY=your-key
+/path/to/grok-public-folder/bin/bridge</code></pre>
+      <p>Leave this running. It watches for requests from Resolve.</p>
+
+      <h3>Terminal chat (no Resolve)</h3>
+      <pre><code>export XAI_API_KEY=your-key
+/path/to/grok-public-folder/bin/grok</code></pre>
+      <p>Commands inside the chat REPL:</p>
+      <pre><code>/image mars sunset over dunes
+/video slow orbit around a red planet --duration 10
+/import
+/help</code></pre>
+    </section>
+
+    <section id="console">
+      <h2>Resolve console</h2>
+
+      <h3>Lua console</h3>
+      <p>Load the bridge helper (use a function name — bare <code>grok</code> is invalid Lua):</p>
+      <pre><code>dofile("/path/to/grok-public-folder/resolve/lua/grok_bridge.lua")
+g()              -- help
+ping()           -- test bridge
+g("your prompt")
+g("/image prompt")
+g("/video prompt")
+import()         -- import into active bin</code></pre>
+
+      <h3>Python console (Py3)</h3>
+      <pre><code>exec(open("/path/to/grok-public-folder/grok_load.py").read(), globals())
+g("your prompt")
+import_artifacts()</code></pre>
+
+      <h3>Utility script shortcuts</h3>
+      <pre><code>Workspace → Scripts → Utility → Import Grok Artifacts
+Workspace → Scripts → Utility → Grok Console
+Workspace → Scripts → Utility → Grok Console Import</code></pre>
+    </section>
+
+    <section id="scan">
+      <h2>Downloads scan</h2>
+      <p>Run from Terminal outside Resolve:</p>
+      <pre><code>/path/to/grok-public-folder/bin/scan</code></pre>
+      <p>
+        Scans <code>~/Downloads</code> for files whose macOS metadata references
+        <code>grok.com</code>, <code>x.ai</code>, or related hosts. Shows a Yes/No dialog before
+        moving files. Each moved file gets a <code>.grok.json</code> sidecar with source metadata.
+      </p>
+    </section>
+
+    <section id="folders">
+      <h2>Folder layout</h2>
+      <pre><code>grok-public-folder/
+├── video/          clips land here
+├── image/          stills land here
+├── bridge/         lua/python ↔ terminal handoff
+├── bin/
+│   ├── grok        terminal chat + generation
+│   ├── bridge      bridge daemon for resolve console
+│   └── scan        scan downloads
+├── resolve/
+│   ├── lua/        console helpers
+│   └── utility/    panel + import scripts (copied by install-resolve.sh)
+└── install-resolve.sh</code></pre>
+
+      <h3>Metadata sidecars</h3>
+      <pre><code>clip.mp4
+clip.mp4.grok.json</code></pre>
+    </section>
+
+    <section id="troubleshooting">
+      <h2>Troubleshooting</h2>
+
+      <table>
+        <thead>
+          <tr><th>Problem</th><th>Fix</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>'=' expected near '&lt;eof&gt;'</code> when typing <code>grok</code> in Lua</td>
+            <td><code>grok</code> alone is not valid Lua. Use <code>g()</code> or <code>g("message")</code>.</td>
+          </tr>
+          <tr>
+            <td><code>Resolve()</code> is nil in console</td>
+            <td>Use <strong>Grok Panel</strong> instead, or run import from Utility scripts. Console context varies by Resolve version.</td>
+          </tr>
+          <tr>
+            <td>Imported 0 files</td>
+            <td><code>video/</code> and <code>image/</code> are empty. Generate or scan Downloads first.</td>
+          </tr>
+          <tr>
+            <td>Bridge times out</td>
+            <td>Start <code>bin/bridge</code> in Terminal and set <code>XAI_API_KEY</code>.</td>
+          </tr>
+          <tr>
+            <td>Scripts missing in Resolve menu</td>
+            <td>Run <code>./install-resolve.sh</code> and restart Resolve.</td>
+          </tr>
+          <tr>
+            <td>Wrong folder in panel</td>
+            <td>Update <code>GROK_ROOT</code> in <code>resolve/utility/Grok Panel.py</code>, then re-run install.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="wrap">
+    <a href="https://github.com/fornevercollective/grok-public-folder">GitHub repository</a>
+    · Built for Resolve Free + Grok Imagine workflow
+  </footer>
+</body>
+</html>
