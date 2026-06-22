@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+bridge/request.json
+bridge/response.json
+bridge/chat_history.json
+bridge/bridge.pid
+.DS_Store

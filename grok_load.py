@@ -1,0 +1,1 @@
+exec(open("/Users/tref/film/grok-public-folder/grok_bridge_console.py").read(), globals())
