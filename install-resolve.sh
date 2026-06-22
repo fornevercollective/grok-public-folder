@@ -5,10 +5,11 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 SCRIPTS="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts"
 UTIL_DEST="$SCRIPTS/Utility"
 
-# Resolve lists Utility scripts under Scripts on every page (Comp/Edit/Color/Deliver).
-# One file "Grok.py" — same entry on each page, not separate scripts.
+# Resolve Free (19.1+) removed Python UIManager — use Grok.lua for the menu.
+# Utility scripts appear under Scripts on each page; one Grok.lua entry.
 
 GROK_NAMES=(
+  "Grok.lua"
   "Grok.py"
   "Grok Menu.py"
   "Grok Bootstrap.lua"
@@ -30,8 +31,9 @@ for dir in Utility Comp Tool Edit Color Deliver Fairlight; do
 done
 
 mkdir -p "$UTIL_DEST"
-cp "$ROOT/resolve/utility/Grok.py" "$UTIL_DEST/"
-chmod +x "$UTIL_DEST/Grok.py" 2>/dev/null || true
+cp "$ROOT/resolve/utility/Grok.lua" "$UTIL_DEST/"
+xattr -cr "$UTIL_DEST/Grok.lua" 2>/dev/null || true
 
-echo "installed $UTIL_DEST/Grok.py"
-echo "Workspace -> Scripts -> Grok (under Comp / Edit / Color / Deliver on each page)"
+echo "installed $UTIL_DEST/Grok.lua"
+echo "Workspace -> Scripts -> Grok"
+echo "Resolve Free: Lua menu (Python UI not supported since 19.1)"
