@@ -1,0 +1,31 @@
+project:
+  name: grok-public-folder
+  brand_title: "Grok Resolve Pipe — Imagine → Edit → Colossus/Dojo"
+  grok_optimized: true
+  resolve_compatible: true
+  imagine_compatible: true
+  colossus_compatible: true
+  dojo_pipeline: true
+  pages_docs: https://fornevercollective.github.io/grok-public-folder/
+  entrypoints:
+    startup: bin/startup
+    bridge: bin/bridge
+    grok: bin/grok
+    scan: bin/scan
+    install_resolve: install-resolve.sh
+  ecosystem_paths:
+    imagine:
+      - project/presets-manifest.json
+      - project/stories/
+      - grok_presets.py
+    grok_repo_template:
+      - project/grok-resolve-startup.yaml
+      - metadata.yaml
+    superheavy_colossus:
+      - pipe.training.config
+      - pipe.training.launch
+    rust_dojo:
+      - pipe.training.dojo_slug
+  grok_skills:
+    - imagine preset slugs via grok_presets.py
+    - story beats via grok_story.py

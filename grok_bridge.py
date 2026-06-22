@@ -21,6 +21,8 @@ from grok_api import (
     require_api_key,
     save_chat_history,
 )
+from grok_presets import compose_from_slug_line, compose_prompt
+from grok_paths import MAX_VIDEO_RESOLUTION
 
 REQUEST_FILE = BRIDGE_DIR / "request.json"
 RESPONSE_FILE = BRIDGE_DIR / "response.json"
@@ -76,9 +78,34 @@ def handle_request(payload: dict) -> dict:
                 "files": files,
             }
 
+        if action in {"slug", "preset"}:
+            slug = (payload.get("slug") or text.split(" ", 1)[0]).strip()
+            rest = payload.get("base_prompt") or (text.split(" ", 1)[1] if " " in text else "")
+            if not slug:
+                raise ValueError("slug action needs slug")
+            prompt = compose_prompt(slug, base_prompt=rest)
+            path = generate_video(
+                api_key,
+                prompt,
+                duration=int(payload.get("duration", 10)),
+                aspect_ratio=payload.get("aspect_ratio", "16:9"),
+                resolution=payload.get("resolution", MAX_VIDEO_RESOLUTION),
+                on_status=lambda status: print(f"[bridge] video status: {status}"),
+            )
+            return {
+                "id": req_id,
+                "ok": True,
+                "message": f"saved {path.name} with preset {slug}",
+                "files": [str(path)],
+            }
+
         if action == "image":
             if not text:
                 raise ValueError("image request needs text")
+            if text.startswith("/slug ") or (payload.get("slug")):
+                slug = payload.get("slug") or text.split()[1]
+                rest = " ".join(text.split()[2:]) if text.startswith("/slug ") else text
+                text = compose_prompt(slug, base_prompt=rest)
             path = generate_image(api_key, text, aspect_ratio=payload.get("aspect_ratio", "16:9"))
             return {
                 "id": req_id,
@@ -90,12 +117,17 @@ def handle_request(payload: dict) -> dict:
         if action == "video":
             if not text:
                 raise ValueError("video request needs text")
+            if text.startswith("/slug "):
+                _, prompt = compose_from_slug_line(text)
+                text = prompt
+            elif payload.get("slug"):
+                text = compose_prompt(payload["slug"], base_prompt=text)
             path = generate_video(
                 api_key,
                 text,
-                duration=int(payload.get("duration", 8)),
+                duration=int(payload.get("duration", 10)),
                 aspect_ratio=payload.get("aspect_ratio", "16:9"),
-                resolution=payload.get("resolution", "720p"),
+                resolution=payload.get("resolution", MAX_VIDEO_RESOLUTION),
                 on_status=lambda status: print(f"[bridge] video status: {status}"),
             )
             return {

@@ -1,0 +1,68 @@
+# Grok Resolve startup project — fastest pipe from Imagine → folder → Resolve edit
+# Ecosystem: imagine (presets) + grok-public-folder (pipe) + grok-repo-template (Colossus/Dojo)
+
+project:
+  name: grok-resolve-startup
+  brand_title: "Grok Resolve Startup — Imagine / Colossus / Dojo Pipe"
+  version: 1
+
+resolve:
+  # Timeline at max edit resolution; Grok clips arrive at generation_resolution then upscale in post
+  timeline_width: 3840
+  timeline_height: 2160
+  timeline_frame_rate: 23.976
+  color_space: "DaVinci Wide Gamut"
+  gamma: "DaVinci Intermediate"
+
+generation:
+  aspect_ratio: "16:9"
+  resolution: "720p"   # xAI grok-imagine-video max; upscale via tools/auto_upscale_hook.py
+  duration_sec: 10
+  default_story: project/stories/dusk-to-neon.json
+
+media_pool_bins:
+  - "01_inputs"
+  - "02_stills"
+  - "03_clips"
+  - "03_clips/grok_generated"
+  - "04_story_beats"
+  - "05_resolve_edit"
+  - "06_exports"
+
+import_target_bin: "03_clips/grok_generated"
+
+featured_slugs:
+  - neo-noir
+  - cyberpunk-neon
+  - teal-orange-blockbuster
+  - anamorphic-cinematic
+  - kodak-portra-400
+  - dune-sci-fi
+  - golden-hour-romance
+  - vintage-35mm
+
+pipe:
+  # Fast lane: generation + edit (this repo)
+  generation:
+    repo: https://github.com/fornevercollective/imagine
+    entry: style_presets/<slug>/prompt.txt
+    stories: stories/*.json
+    output: video/ and image/
+  editing:
+    repo: https://github.com/fornevercollective/grok-public-folder
+    entry: bin/bridge
+    resolve: Workspace → Scripts → Utility → Grok Startup
+    import_bin: 03_clips/grok_generated
+  # Training lane: Colossus (JAX cluster) + Dojo (Rust perf) via grok-repo-template
+  training:
+    repo: https://github.com/fornevercollective/grok-repo-template
+    colossus_slug: jax-colossus
+    dojo_slug: rust-dojo
+    config: configs/colossus.yaml
+    launch: scripts/colossus-launch.sh
+    ingest_from: 06_exports
+
+repos:
+  imagine: https://github.com/fornevercollective/imagine
+  grok_public_folder: https://github.com/fornevercollective/grok-public-folder
+  grok_repo_template: https://github.com/fornevercollective/grok-repo-template

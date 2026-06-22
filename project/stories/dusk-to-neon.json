@@ -1,0 +1,52 @@
+{
+  "title": "Dusk to Neon: The Fade",
+  "genre": "neo-noir to cyberpunk transformation",
+  "arc_type": "3-act",
+  "base_prompt": "a solitary young woman with sharp features, long dark coat, short black hair with a silver streak, standing in an empty urban street at transition from day to night, carrying a small mysterious package, cinematic character study, preserve exact face, body type, clothing details, and expression across all shots",
+  "character_ancestry_bible": "Elena Voss, a 29-year-old woman of primarily recent East African sapiens ancestry with 8% Neanderthal introgression (robust brow ridge contribution, thicker jaw potential, cold-climate skin baseline with high melanin plasticity) + minor Denisovan input in vascular patterning. Face shape: heart-shaped with high forehead, soft taper to chin, prominent cheekbones softened by gracile sapiens traits. Hair: type 4 dense coily black with silver streak in loose low bun, fine micro vellus fuzz on face and upper torso, moderate macro terminal axillary and lower leg hair in natural gradient. Body: tall ectomorphic with long limbs/high crural index (equatorial savanna hominin adaptation), narrow waist, lean athletic upper torso, rounded glutes. Skin: high eumelanin dispersion in basal layers for deep tone; 32% subsurface irradiance refraction with visible faint tiger-stripe melanin patterning (most in raking light on temples, inner arms, collarbones) producing realistic SSS glow and depth calibrated to high-UV ancestry.",
+  "continuity_notes": "Keep the woman's face, silver streak in hair, coat shape and buttons, the package, and general pose consistent. Use previous output as strong reference image when moving to next style. Only the color grade, grain, lighting mood, and world details should change dramatically with each style. ALWAYS repeat the full character_ancestry_bible block verbatim at the start of every beat's prompt for cross-LUT anatomical lock.",
+  "total_duration_sec": 72,
+  "beats": [
+    {
+      "beat_id": "act1_opening",
+      "name": "The Last Warm Light",
+      "style_slug": "kodak-portra-400",
+      "source": "presets",
+      "duration_sec": 10,
+      "narrative_beat": "Setup / Ordinary World.",
+      "prompt_add": "gentle golden hour side light fading, soft wind moving her hair and coat hem, she looks down at the package with quiet curiosity, very subtle handheld feel, filmic breathing",
+      "ref_strategy": "base_photo"
+    },
+    {
+      "beat_id": "act2_rising",
+      "name": "Rain and Memory",
+      "style_slug": "neo-noir",
+      "source": "presets",
+      "duration_sec": 10,
+      "narrative_beat": "Rising Action.",
+      "prompt_add": "heavy cold rain, wet pavement reflections of sodium streetlights, she walks with purpose, coat collar up, high contrast detective mood",
+      "ref_strategy": "previous_image"
+    },
+    {
+      "beat_id": "act2_crisis",
+      "name": "The Glitch",
+      "style_slug": "cyberpunk-neon",
+      "source": "presets",
+      "duration_sec": 12,
+      "narrative_beat": "Crisis / Midpoint twist.",
+      "prompt_add": "dense cyberpunk night, holographic ads, heavy rain, neon magenta/cyan reflections, package emits soft digital light",
+      "ref_strategy": "previous_image"
+    },
+    {
+      "beat_id": "act3_climax",
+      "name": "The Choice in the Light",
+      "style_slug": "teal-orange-blockbuster",
+      "source": "presets",
+      "duration_sec": 10,
+      "narrative_beat": "Climax.",
+      "prompt_add": "dramatic teal shadows, orange rim light, wind and rain whipping, heroic framing, anamorphic lens flares",
+      "ref_strategy": "previous_image"
+    }
+  ],
+  "output_target": "stories/outputs/dusk-to-neon-full.mp4"
+}

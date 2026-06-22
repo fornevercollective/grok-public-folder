@@ -22,6 +22,8 @@ from grok_api import (
     require_api_key,
     save_chat_history,
 )
+from grok_presets import compose_from_slug_line, compose_prompt, all_slugs
+from grok_paths import MAX_VIDEO_RESOLUTION
 
 
 def import_latest() -> int:
@@ -46,6 +48,8 @@ def print_help() -> None:
         """
 Commands:
   /help                         show this help
+  /slug <slug> <prompt>         generate video with imagine preset slug
+  /slugs                        list available preset slugs
   /image <prompt>               generate image -> artifacts/image/
   /video <prompt>               generate video -> artifacts/video/
   /video <prompt> --duration 10 optional flags: --duration, --ratio 16:9, --res 720p
@@ -64,7 +68,7 @@ def parse_generation_args(parts: list[str]) -> tuple[str, dict]:
         raise ValueError("Add a prompt after the command.")
     duration = 8
     aspect_ratio = "16:9"
-    resolution = "720p"
+    resolution = MAX_VIDEO_RESOLUTION
     prompt_parts: list[str] = []
     idx = 0
     while idx < len(parts):
@@ -124,6 +128,26 @@ def handle_command(api_key: str, line: str, messages: list[dict]) -> bool:
                     print(f"imported {count} into {bin_name}")
             except Exception as exc:
                 print(exc)
+        return True
+    if cmd == "/slugs":
+        for slug in all_slugs()[:40]:
+            print(f"  {slug}")
+        print(f"  ... {len(all_slugs())} total. see project/presets-manifest.json")
+        return True
+    if cmd == "/slug":
+        try:
+            slug, prompt = compose_from_slug_line(" ".join(args))
+            print(f"Generating with preset {slug}...")
+            path = generate_video(
+                api_key,
+                prompt,
+                duration=10,
+                resolution=MAX_VIDEO_RESOLUTION,
+                on_status=lambda status: print(f"  video status: {status}..."),
+            )
+            print(f"Saved: {path}")
+        except Exception as exc:
+            print(f"Slug generation failed: {exc}")
         return True
     if cmd == "/image":
         try:

@@ -1,0 +1,32 @@
+{
+  "source": "https://github.com/fornevercollective/imagine",
+  "raw_base": "https://raw.githubusercontent.com/fornevercollective/imagine/main",
+  "featured_templates": [
+    "chibi", "professional-headshot", "logo-editor", "70s-street-style", "quality-enhancer",
+    "comic-book", "object-remover", "product-showcase", "holo-skull-badge", "glossy-product-shot",
+    "80s-anime", "watercolor-portrait", "video-game", "3d-animation", "spaghetti-western",
+    "haze-portrait", "funky-dance", "future-past", "roman-empire", "ad-astra", "add-girlfriend",
+    "future-family", "laser-fight", "sunny-morning"
+  ],
+  "groups": {
+    "film_emulation": [
+      "kodak-portra-400", "kodak-ektar-100", "kodak-gold-200", "kodak-ultramax-400",
+      "kodak-tri-x-400-bw", "fuji-velvia-50", "fuji-superia-400", "fuji-pro-400h",
+      "fuji-acros-100-bw", "fuji-eterna-500", "cinestill-50d", "cinestill-800t",
+      "ilford-hp5-400-bw", "kodachrome-64", "kodak-vision3-500t", "fuji-eterna-250d",
+      "arri-alexa-logc-to-rec709", "heavy-35mm-film-grain-gate-weave"
+    ],
+    "pinterest_aesthetic": [
+      "cottagecore", "dark-academia", "light-academia", "fairycore", "old-money-aesthetic",
+      "clean-girl", "y2k-aesthetic", "cybercore", "grunge-90s", "barbiecore"
+    ],
+    "cinematic_genre": [
+      "film-noir", "neo-noir", "cyberpunk-neon", "teal-orange-blockbuster", "western-sepia",
+      "horror-grain", "dune-sci-fi", "golden-hour-romance", "vhs-80s", "anamorphic-cinematic",
+      "ethereal-fantasy", "gritty-documentary", "vintage-35mm", "moody-teal-drama",
+      "bleach-bypass-lut", "teal-orange-hollywood-cc", "panavision-c-series-anamorphic",
+      "cooke-anamorphic", "anamorphic-lens-breathing-flare", "fisheye-extreme-distortion",
+      "j-cut-l-cut-audio-lead", "cross-process-e-6-to-c-41", "day-for-night-lut"
+    ]
+  }
+}
