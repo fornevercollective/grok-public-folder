@@ -2,6 +2,7 @@ dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_startup.lua")
 
 local GROK_ROOT = "/Users/tref/film/grok-public-folder"
 local TERMINAL_LAUNCHER = GROK_ROOT .. "/bin/grok-terminal"
+local MENU_UI = GROK_ROOT .. "/bin/grok-menu"
 
 local MENU_ITEMS = {
     "Bootstrap",
@@ -13,10 +14,38 @@ local MENU_ITEMS = {
     "Generate Video",
 }
 
+local function trim(text)
+    if not text then
+        return ""
+    end
+    return text:gsub("^%s+", ""):gsub("%s+$", "")
+end
+
+local function shell_quote(value)
+    return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+end
+
+local function run_menu_ui(...)
+    local parts = { shell_quote(MENU_UI) }
+    for i = 1, select("#", ...) do
+        table.insert(parts, shell_quote(select(i, ...)))
+    end
+    local cmd = table.concat(parts, " ")
+    local handle = io.popen(cmd)
+    if not handle then
+        return nil
+    end
+    local output = handle:read("*a")
+    handle:close()
+    output = trim(output)
+    if output == "" or output == "CANCELLED" then
+        return nil
+    end
+    return output
+end
+
 local function alert(title, message)
-    local t = title:gsub("\\", "\\\\"):gsub('"', '\\"')
-    local m = message:gsub("\\", "\\\\"):gsub('"', '\\"')
-    os.execute('osascript -e "display alert \\"' .. t .. '\\" message \\"' .. m .. '\\""')
+    run_menu_ui("alert", title, message)
 end
 
 local function notify(message)
@@ -25,47 +54,26 @@ local function notify(message)
 end
 
 local function choose_action()
-    local parts = {}
-    for _, item in ipairs(MENU_ITEMS) do
-        table.insert(parts, '"' .. item:gsub('"', '\\"') .. '"')
-    end
-    local list = table.concat(parts, ", ")
-    local cmd = "osascript -e 'choose from list {" .. list .. "} with title \"Grok\"'"
-    local handle = io.popen(cmd)
-    if not handle then
-        return nil
-    end
-    local choice = handle:read("*a")
-    handle:close()
-    if not choice then
-        return nil
-    end
-    choice = choice:gsub("^%s+", ""):gsub("%s+$", "")
-    if choice == "" or choice == "false" then
-        return nil
-    end
-    return choice
+    return run_menu_ui("choose")
 end
 
-local function prompt_text(title, default_text)
-    local d = default_text:gsub("\\", "\\\\"):gsub('"', '\\"')
-    local t = title:gsub("\\", "\\\\"):gsub('"', '\\"')
-    local cmd = 'osascript -e \'text returned of (display dialog "' .. d ..
-        '" default answer "' .. d .. '" with title "' .. t .. '")\''
-    local handle = io.popen(cmd)
-    if not handle then
-        return default_text
+local function prompt_generate()
+    local output = run_menu_ui("generate")
+    if not output then
+        return nil, nil
     end
-    local text = handle:read("*a")
-    handle:close()
-    if not text or text == "" then
-        return nil
+    local slug, prompt
+    for line in output:gmatch("[^\r\n]+") do
+        if line:match("^SLUG:") then
+            slug = trim(line:gsub("^SLUG:", ""))
+        elseif line:match("^PROMPT:") then
+            prompt = trim(line:gsub("^PROMPT:", ""))
+        end
     end
-    text = text:gsub("^%s+", ""):gsub("%s+$", "")
-    if text == "" then
-        return nil
+    if not slug or not prompt or slug == "" or prompt == "" then
+        return nil, nil
     end
-    return text
+    return slug, prompt
 end
 
 local function open_terminal(command)
@@ -82,22 +90,17 @@ local function run_python_background(subcmd)
 end
 
 local function action_generate()
-    local slug = prompt_text("Grok slug", "neo-noir")
+    local slug, prompt = prompt_generate()
     if not slug then
-        alert("Grok", "slug cancelled")
-        return
-    end
-    local prompt = prompt_text("Grok prompt", "woman in rain on empty street at night")
-    if not prompt then
-        alert("Grok", "prompt cancelled")
+        alert("Grok", "Generate cancelled")
         return
     end
 
     local gen_cmd = GROK_ROOT .. "/bin/generate --slug '" .. slug:gsub("'", "'\\''") ..
         "' --prompt '" .. prompt:gsub("'", "'\\''") .. "'"
     open_terminal(gen_cmd)
-    notify("Terminal opened — set XAI_API_KEY if needed, watch progress there")
-    alert("Grok", "Terminal opened for generate.\n\nIf nothing runs, open Terminal and run:\nexport XAI_API_KEY=your-key\n" .. gen_cmd)
+    notify("Terminal opened — set XAI_API_KEY if needed")
+    alert("Grok", "Terminal opened for generate.\n\nIf nothing runs:\nexport XAI_API_KEY=your-key\n\n" .. gen_cmd)
 end
 
 local function action_bridge()
@@ -108,10 +111,10 @@ end
 local function dispatch(choice)
     if choice == "Bootstrap" then
         grok_bootstrap_startup()
-        alert("Grok", "bootstrap done — check Resolve console output")
+        alert("Grok", "Bootstrap done — check Resolve console output")
     elseif choice == "Scan Downloads" then
         run_python_background("scan")
-        notify("scan started — check Downloads dialog")
+        notify("Scan started — watch for Downloads dialog")
     elseif choice == "Import" then
         grok_import_verbose()
     elseif choice == "Scan + Import" then
@@ -124,7 +127,7 @@ local function dispatch(choice)
     elseif choice == "Generate Video" then
         action_generate()
     else
-        alert("Grok", "unknown choice: " .. tostring(choice))
+        alert("Grok", "Unknown choice: " .. tostring(choice))
     end
 end
 

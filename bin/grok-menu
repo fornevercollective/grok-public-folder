@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SRC="$ROOT/resolve/ui/GrokMenu.swift"
+BIN="$ROOT/bin/grok-menu-ui"
+
+if [[ ! -f "$SRC" ]]; then
+  echo "missing $SRC" >&2
+  exit 1
+fi
+
+if [[ ! -x "$BIN" ]] || [[ "$SRC" -nt "$BIN" ]]; then
+  swiftc -O -o "$BIN" "$SRC" -framework AppKit 2>/dev/null || true
+fi
+
+if [[ -x "$BIN" ]]; then
+  exec "$BIN" "$@"
+fi
+
+exec /usr/bin/swift "$SRC" "$@"

@@ -34,6 +34,10 @@ mkdir -p "$UTIL_DEST"
 cp "$ROOT/resolve/utility/Grok.lua" "$UTIL_DEST/"
 xattr -cr "$UTIL_DEST/Grok.lua" 2>/dev/null || true
 
+if [[ -f "$ROOT/resolve/ui/GrokMenu.swift" ]]; then
+  swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT/resolve/ui/GrokMenu.swift" -framework AppKit 2>/dev/null || true
+fi
+
 echo "installed $UTIL_DEST/Grok.lua"
 echo "Workspace -> Scripts -> Grok"
 echo "Resolve Free: Lua menu (Python UI not supported since 19.1)"
