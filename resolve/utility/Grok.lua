@@ -1,7 +1,7 @@
 dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_startup.lua")
 
 local GROK_ROOT = "/Users/tref/film/grok-public-folder"
-local PYTHON = "/usr/bin/env python3"
+local TERMINAL_LAUNCHER = GROK_ROOT .. "/bin/grok-terminal"
 
 local MENU_ITEMS = {
     "Bootstrap",
@@ -10,11 +10,18 @@ local MENU_ITEMS = {
     "Scan + Import",
     "Open Folder",
     "Start Bridge",
-    "Generate (terminal)",
+    "Generate Video",
 }
 
-local function shell_quote(value)
-    return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+local function alert(title, message)
+    local t = title:gsub("\\", "\\\\"):gsub('"', '\\"')
+    local m = message:gsub("\\", "\\\\"):gsub('"', '\\"')
+    os.execute('osascript -e "display alert \\"' .. t .. '\\" message \\"' .. m .. '\\""')
+end
+
+local function notify(message)
+    local m = message:gsub("\\", "\\\\"):gsub('"', '\\"')
+    os.execute('osascript -e "display notification \\"' .. m .. '\\" with title \\"Grok\\""')
 end
 
 local function choose_action()
@@ -23,9 +30,7 @@ local function choose_action()
         table.insert(parts, '"' .. item:gsub('"', '\\"') .. '"')
     end
     local list = table.concat(parts, ", ")
-    local cmd = 'osascript -e ' .. shell_quote(
-        'choose from list {' .. list .. '} with title "Grok" default items {"Bootstrap"}'
-    )
+    local cmd = "osascript -e 'choose from list {" .. list .. "} with title \"Grok\"'"
     local handle = io.popen(cmd)
     if not handle then
         return nil
@@ -42,17 +47,11 @@ local function choose_action()
     return choice
 end
 
-local function run_python(subcmd)
-    local cmd = PYTHON .. " " .. shell_quote(GROK_ROOT .. "/grok_menu_cli.py") .. " " .. subcmd
-    os.execute(cmd)
-end
-
 local function prompt_text(title, default_text)
-    local cmd = 'osascript -e ' .. shell_quote(
-        'text returned of (display dialog ' .. shell_quote(default_text) ..
-        ' default answer ' .. shell_quote(default_text) ..
-        ' with title ' .. shell_quote(title) .. ')'
-    )
+    local d = default_text:gsub("\\", "\\\\"):gsub('"', '\\"')
+    local t = title:gsub("\\", "\\\\"):gsub('"', '\\"')
+    local cmd = 'osascript -e \'text returned of (display dialog "' .. d ..
+        '" default answer "' .. d .. '" with title "' .. t .. '")\''
     local handle = io.popen(cmd)
     if not handle then
         return default_text
@@ -60,37 +59,72 @@ local function prompt_text(title, default_text)
     local text = handle:read("*a")
     handle:close()
     if not text or text == "" then
-        return default_text
+        return nil
     end
-    return text:gsub("^%s+", ""):gsub("%s+$", "")
+    text = text:gsub("^%s+", ""):gsub("%s+$", "")
+    if text == "" then
+        return nil
+    end
+    return text
+end
+
+local function open_terminal(command)
+    local launcher = TERMINAL_LAUNCHER
+    local escaped = command:gsub("'", "'\\''")
+    os.execute("'" .. launcher .. "' '" .. escaped .. "'")
+end
+
+local function run_python_background(subcmd)
+    local log = GROK_ROOT .. "/bridge/menu-last.log"
+    local cmd = "/usr/bin/env python3 " .. GROK_ROOT .. "/grok_menu_cli.py " .. subcmd ..
+        " >> " .. log .. " 2>&1 &"
+    os.execute(cmd)
 end
 
 local function action_generate()
     local slug = prompt_text("Grok slug", "neo-noir")
+    if not slug then
+        alert("Grok", "slug cancelled")
+        return
+    end
     local prompt = prompt_text("Grok prompt", "woman in rain on empty street at night")
-    local cmd = PYTHON .. " " .. shell_quote(GROK_ROOT .. "/grok_menu_cli.py") ..
-        " generate --slug " .. shell_quote(slug) .. " --prompt " .. shell_quote(prompt)
-    os.execute(cmd)
+    if not prompt then
+        alert("Grok", "prompt cancelled")
+        return
+    end
+
+    local gen_cmd = GROK_ROOT .. "/bin/generate --slug '" .. slug:gsub("'", "'\\''") ..
+        "' --prompt '" .. prompt:gsub("'", "'\\''") .. "'"
+    open_terminal(gen_cmd)
+    notify("Terminal opened — set XAI_API_KEY if needed, watch progress there")
+    alert("Grok", "Terminal opened for generate.\n\nIf nothing runs, open Terminal and run:\nexport XAI_API_KEY=your-key\n" .. gen_cmd)
+end
+
+local function action_bridge()
+    open_terminal(GROK_ROOT .. "/bin/bridge")
+    notify("Terminal opened for bridge — export XAI_API_KEY first")
 end
 
 local function dispatch(choice)
     if choice == "Bootstrap" then
         grok_bootstrap_startup()
+        alert("Grok", "bootstrap done — check Resolve console output")
     elseif choice == "Scan Downloads" then
-        run_python("scan")
+        run_python_background("scan")
+        notify("scan started — check Downloads dialog")
     elseif choice == "Import" then
         grok_import_verbose()
     elseif choice == "Scan + Import" then
-        run_python("scan")
+        run_python_background("scan")
         grok_import_verbose()
     elseif choice == "Open Folder" then
-        run_python("open-folder")
+        os.execute("open " .. GROK_ROOT)
     elseif choice == "Start Bridge" then
-        run_python("bridge")
-    elseif choice == "Generate (terminal)" then
+        action_bridge()
+    elseif choice == "Generate Video" then
         action_generate()
     else
-        print("unknown choice: " .. tostring(choice))
+        alert("Grok", "unknown choice: " .. tostring(choice))
     end
 end
 

@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT" || exit 1
+
+echo "Grok video generate"
+echo "folder: $ROOT"
+
+if [[ -z "${XAI_API_KEY:-}" ]]; then
+  echo ""
+  echo "ERROR: XAI_API_KEY is not set."
+  echo "Run:  export XAI_API_KEY=your-key"
+  echo "Key:  https://console.x.ai"
+  exit 1
+fi
+
+exec python3 "$ROOT/grok_menu_cli.py" generate "$@"

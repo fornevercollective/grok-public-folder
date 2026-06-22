@@ -1,0 +1,17 @@
+#!/bin/bash
+# Open a visible Terminal tab running a grok command.
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CMD="${1:-$ROOT/bin/grok}"
+shift 2>/dev/null || true
+
+escape_apple() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+ESCAPED_CMD=$(escape_apple "$CMD $*")
+osascript <<EOF
+tell application "Terminal"
+  activate
+  do script "cd $(escape_apple "$ROOT") && export XAI_API_KEY=\"\${XAI_API_KEY}\" && $ESCAPED_CMD"
+end tell
+EOF
