@@ -12,6 +12,7 @@ import yaml
 
 from grok_paths import PROJECT_DIR, ROOT, STARTUP_CONFIG
 from grok_presets import all_slugs, load_manifest
+from grok_resolve_env import connection_help, diagnose
 
 
 def load_startup_config() -> dict:
@@ -78,7 +79,7 @@ def apply_resolve_settings(project, resolve_cfg: dict) -> list[str]:
 def bootstrap_resolve(config: dict, create_project: bool = False, project_name: str = "Grok Resolve Startup") -> dict:
     resolve = get_resolve()
     if not resolve:
-        raise RuntimeError("resolve is not running")
+        raise RuntimeError(connection_help())
 
     pm = resolve.GetProjectManager()
     project = pm.GetCurrentProject()
@@ -138,7 +139,18 @@ def main() -> int:
     parser.add_argument("--project-name", default="Grok Resolve Startup")
     parser.add_argument("--resolve-only", action="store_true", help="only configure resolve, skip state write")
     parser.add_argument("--list-slugs", action="store_true")
+    parser.add_argument("--check", action="store_true", help="diagnose terminal connection to Resolve")
     args = parser.parse_args()
+
+    if args.check:
+        info = diagnose()
+        for key, value in info.items():
+            print(f"{key}: {value}")
+        if not info.get("connected"):
+            print()
+            print(connection_help())
+            return 1
+        return 0
 
     if args.list_slugs:
         manifest = load_manifest()
@@ -157,14 +169,17 @@ def main() -> int:
     try:
         resolve_result = bootstrap_resolve(config, create_project=args.create_project, project_name=args.project_name)
     except RuntimeError as exc:
-        print(f"resolve: {exc}", file=sys.stderr)
+        print(str(exc), file=sys.stderr)
 
     if not args.resolve_only:
         state_path = write_state(config)
         print(f"state {state_path}")
 
     print(format_report(config, resolve_result))
-    return 0 if resolve_result else 1
+    if resolve_result:
+        return 0
+    print("\nfolder + presets ready — resolve bootstrap needs External scripting → Local")
+    return 0
 
 
 if __name__ == "__main__":

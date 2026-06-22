@@ -172,10 +172,11 @@ def clear_chat_history() -> None:
 
 
 def get_resolve():
-    resolve_api = "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/Modules"
-    if resolve_api not in sys.path:
-        sys.path.append(resolve_api)
+    from grok_resolve_env import ensure_resolve_env
+
+    ensure_resolve_env()
     import DaVinciResolveScript as dvr_script
+
     return dvr_script.scriptapp("Resolve")
 
 
