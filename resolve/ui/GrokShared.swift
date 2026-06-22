@@ -1,6 +1,14 @@
 import AppKit
 import Foundation
 
+enum GrokBrand {
+    static let appName = "Grok for Resolve"
+    static let shortName = "Grok"
+    static let source = "DaVinci Resolve → Workspace → Scripts → Grok"
+    static let repo = "fornevercollective/grok-public-folder"
+    static let trustLine = "Official Grok workflow · local scripts · x.ai API (your key)"
+}
+
 enum GrokTheme {
     static let window = NSColor(calibratedRed: 0.137, green: 0.137, blue: 0.137, alpha: 1)
     static let header = NSColor(calibratedRed: 0.102, green: 0.102, blue: 0.102, alpha: 1)
@@ -258,6 +266,39 @@ enum UIHelpers {
                 DispatchQueue.main.async { imageView.image = image }
             }
         }
+    }
+
+    static func trustFooter() -> NSView {
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.wantsLayer = true
+        container.layer?.backgroundColor = GrokTheme.header.cgColor
+        container.layer?.borderColor = GrokTheme.border.cgColor
+        container.layer?.borderWidth = 1
+
+        let source = NSTextField(labelWithString: GrokBrand.source)
+        source.font = NSFont.systemFont(ofSize: 10, weight: .medium)
+        source.textColor = GrokTheme.text
+        source.translatesAutoresizingMaskIntoConstraints = false
+
+        let detail = NSTextField(labelWithString: "\(GrokBrand.trustLine)\n\(GrokPaths.root.path)")
+        detail.font = NSFont.systemFont(ofSize: 9)
+        detail.textColor = GrokTheme.muted
+        detail.maximumNumberOfLines = 2
+        detail.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(source)
+        container.addSubview(detail)
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalToConstant: 44),
+            source.topAnchor.constraint(equalTo: container.topAnchor, constant: 6),
+            source.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
+            source.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
+            detail.topAnchor.constraint(equalTo: source.bottomAnchor, constant: 2),
+            detail.leadingAnchor.constraint(equalTo: source.leadingAnchor),
+            detail.trailingAnchor.constraint(equalTo: source.trailingAnchor),
+        ])
+        return container
     }
 
     static func thumbnailImage(for preset: PresetEntry, completion: @escaping (NSImage) -> Void) {

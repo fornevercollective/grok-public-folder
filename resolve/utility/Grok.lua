@@ -3,6 +3,8 @@ dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_startup.lua")
 local GROK_ROOT = "/Users/tref/film/grok-public-folder"
 local TERMINAL_LAUNCHER = GROK_ROOT .. "/bin/grok-terminal"
 local MENU_UI = GROK_ROOT .. "/bin/grok-menu"
+local APP_NAME = "Grok for Resolve"
+local APP_SOURCE = "DaVinci Resolve → Workspace → Scripts → Grok"
 
 local MENU_ITEMS = {
     "Bootstrap",
@@ -50,7 +52,17 @@ end
 
 local function notify(message)
     local m = message:gsub("\\", "\\\\"):gsub('"', '\\"')
-    os.execute('osascript -e "display notification \\"' .. m .. '\\" with title \\"Grok\\""')
+    local t = APP_NAME:gsub("\\", "\\\\"):gsub('"', '\\"')
+    os.execute('osascript -e "display notification \\"' .. m .. '\\" with title \\"' .. t .. '\\""')
+end
+
+local function trust_terminal_message(action, detail)
+    return APP_NAME .. " is opening Terminal.app.\n\n" ..
+        "Launched from:\n  " .. APP_SOURCE .. "\n\n" ..
+        "Action:\n  " .. action .. "\n\n" ..
+        detail .. "\n\n" ..
+        "Project folder:\n  " .. GROK_ROOT .. "\n\n" ..
+        "Safe workflow: local scripts in grok-public-folder + x.ai API (your XAI_API_KEY only)."
 end
 
 local function choose_action()
@@ -87,10 +99,11 @@ local function prompt_generate()
     return result
 end
 
-local function open_terminal(command)
+local function open_terminal(command, label)
     local launcher = TERMINAL_LAUNCHER
-    local escaped = command:gsub("'", "'\\''")
-    os.execute("'" .. launcher .. "' '" .. escaped .. "'")
+    local escaped_cmd = command:gsub("'", "'\\''")
+    local escaped_label = (label or "Workflow"):gsub("'", "'\\''")
+    os.execute("'" .. launcher .. "' '" .. escaped_cmd .. "' '" .. escaped_label .. "'")
 end
 
 local function run_python_background(subcmd)
@@ -137,14 +150,21 @@ local function action_generate()
         table.insert(parts, shell_quote(opts.CONTINUITY))
     end
     local gen_cmd = table.concat(parts, " ")
-    open_terminal(gen_cmd)
-    notify("Terminal opened — set XAI_API_KEY if needed")
-    alert("Grok", "Terminal opened for generate.\n\nIf nothing runs:\nexport XAI_API_KEY=your-key\n\n" .. gen_cmd)
+    alert("Opening Terminal", trust_terminal_message(
+        "Generate Video",
+        "Terminal tab title: Grok · Generate Video\nRuns: bin/generate → x.ai video API → saves to video/"
+    ))
+    open_terminal(gen_cmd, "Generate Video")
+    notify("Terminal opened for Generate Video — set XAI_API_KEY if needed")
 end
 
 local function action_bridge()
-    open_terminal(GROK_ROOT .. "/bin/bridge")
-    notify("Terminal opened for bridge — export XAI_API_KEY first")
+    alert("Opening Terminal", trust_terminal_message(
+        "Start Bridge",
+        "Terminal tab title: Grok · Start Bridge\nRuns: bin/bridge → local Grok chat/generate listener"
+    ))
+    open_terminal(GROK_ROOT .. "/bin/bridge", "Start Bridge")
+    notify("Terminal opened for Bridge — export XAI_API_KEY first")
 end
 
 local function dispatch(choice)

@@ -1,17 +1,42 @@
 #!/bin/bash
-# Open a visible Terminal tab running a grok command.
+# Open Terminal with clear Grok for Resolve branding.
+set -euo pipefail
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CMD="${1:-$ROOT/bin/grok}"
-shift 2>/dev/null || true
+LABEL="${2:-Workflow}"
+TITLE="Grok · ${LABEL}"
 
 escape_apple() {
   printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
-ESCAPED_CMD=$(escape_apple "$CMD $*")
+INNER=$(cat <<EOS
+cd $(printf '%q' "$ROOT")
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Grok for DaVinci Resolve"
+echo "  Launched from: Workspace → Scripts → Grok"
+echo "  Action: ${LABEL}"
+echo "  Project folder: ${ROOT}"
+echo "  Repo: fornevercollective/grok-public-folder"
+echo "  Uses: local scripts + x.ai API (your XAI_API_KEY only)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+export XAI_API_KEY="\${XAI_API_KEY}"
+${CMD}
+EOS
+)
+
+ESCAPED_INNER=$(escape_apple "$INNER")
+ESCAPED_TITLE=$(escape_apple "$TITLE")
+
 osascript <<EOF
 tell application "Terminal"
   activate
-  do script "cd $(escape_apple "$ROOT") && export XAI_API_KEY=\"\${XAI_API_KEY}\" && $ESCAPED_CMD"
+  set newTab to do script "${ESCAPED_INNER}"
+  try
+    set custom title of newTab to "${ESCAPED_TITLE}"
+  end try
 end tell
 EOF

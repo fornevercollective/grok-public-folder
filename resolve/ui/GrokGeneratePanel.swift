@@ -58,7 +58,7 @@ final class GeneratePanelController: NSObject, NSWindowDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "Generate Video"
+        window.title = "\(GrokBrand.appName) · Generate Video"
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.minSize = NSSize(width: 820, height: 560)
@@ -66,7 +66,7 @@ final class GeneratePanelController: NSObject, NSWindowDelegate {
 
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
-        let header = UIHelpers.headerView(title: "Generate Video", subtitle: "Imagine preset · LUT · output settings")
+        let header = UIHelpers.headerView(title: "Generate Video", subtitle: GrokBrand.source)
 
         let leftPanel = buildLeftPanel()
         let rightPanel = buildRightPanel()
@@ -85,9 +85,12 @@ final class GeneratePanelController: NSObject, NSWindowDelegate {
         buttonRow.spacing = 8
         buttonRow.translatesAutoresizingMaskIntoConstraints = false
 
+        let trust = UIHelpers.trustFooter()
+
         root.addSubview(header)
         root.addSubview(split)
         root.addSubview(buttonRow)
+        root.addSubview(trust)
         window.contentView = root
 
         NSLayoutConstraint.activate([
@@ -98,7 +101,10 @@ final class GeneratePanelController: NSObject, NSWindowDelegate {
             split.leadingAnchor.constraint(equalTo: root.leadingAnchor),
             split.trailingAnchor.constraint(equalTo: root.trailingAnchor),
             buttonRow.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -14),
-            buttonRow.bottomAnchor.constraint(equalTo: root.bottomAnchor, constant: -12),
+            trust.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+            trust.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            trust.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+            buttonRow.bottomAnchor.constraint(equalTo: trust.topAnchor, constant: -10),
             split.bottomAnchor.constraint(equalTo: buttonRow.topAnchor, constant: -10),
         ])
 

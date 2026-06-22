@@ -45,7 +45,7 @@ def cmd_scan(_: argparse.Namespace) -> int:
         code = scan_main()
     except Exception as exc:
         log(f"scan: failed — {exc}")
-        notify_macos("Grok", f"scan failed: {exc}")
+        notify_macos("Grok for Resolve", f"scan failed: {exc}")
         return 1
     log(f"scan: finished (exit {code})")
     return code
@@ -110,14 +110,14 @@ def cmd_generate(args: argparse.Namespace) -> int:
     except Exception as exc:
         log(f"generate: failed — {exc}")
         traceback.print_exc()
-        notify_macos("Grok generate failed", str(exc))
+        notify_macos("Grok for Resolve", f"generate failed: {exc}")
         print(f"\nERROR: {exc}", file=sys.stderr)
         if "XAI_API_KEY" in str(exc):
             print("Set your key in Terminal: export XAI_API_KEY=your-key", file=sys.stderr)
         return 1
 
     log(f"generate: saved {path}")
-    notify_macos("Grok", f"video saved: {path.name}")
+    notify_macos("Grok for Resolve", f"video saved: {path.name}")
     print(path)
     return 0
 

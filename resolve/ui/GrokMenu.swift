@@ -104,11 +104,11 @@ final class GrokApp: NSObject, NSApplicationDelegate {
     }
 
     private func showChooseMenu() {
-        let window = makeWindow(width: 340, height: 420, title: "Grok")
+        let window = makeWindow(width: 380, height: 480, title: GrokBrand.appName)
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let header = UIHelpers.headerView(title: "Grok", subtitle: "Resolve workflow")
+        let header = UIHelpers.headerView(title: GrokBrand.appName, subtitle: "Imagine → folder → Resolve edit")
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.spacing = 2
@@ -121,15 +121,11 @@ final class GrokApp: NSObject, NSApplicationDelegate {
             stack.addArrangedSubview(button)
         }
 
-        let footer = NSTextField(labelWithString: "Workspace → Scripts → Grok")
-        footer.font = NSFont.systemFont(ofSize: 10)
-        footer.textColor = GrokTheme.muted
-        footer.alignment = .center
-        footer.translatesAutoresizingMaskIntoConstraints = false
+        let trust = UIHelpers.trustFooter()
 
         root.addSubview(header)
         root.addSubview(stack)
-        root.addSubview(footer)
+        root.addSubview(trust)
         window.contentView = root
 
         NSLayoutConstraint.activate([
@@ -139,9 +135,9 @@ final class GrokApp: NSObject, NSApplicationDelegate {
             stack.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 6),
             stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            footer.bottomAnchor.constraint(equalTo: root.bottomAnchor, constant: -10),
-            footer.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 10),
-            footer.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -10),
+            trust.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+            trust.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            trust.trailingAnchor.constraint(equalTo: root.trailingAnchor),
         ])
 
         present(window)
@@ -218,7 +214,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let header = UIHelpers.headerView(title: alertTitle, subtitle: "Grok")
+        let header = UIHelpers.headerView(title: alertTitle, subtitle: GrokBrand.appName)
         let body = NSTextField(wrappingLabelWithString: alertMessage)
         body.font = NSFont.systemFont(ofSize: 12)
         body.textColor = GrokTheme.text

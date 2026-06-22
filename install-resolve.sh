@@ -38,9 +38,16 @@ if [[ -f "$ROOT/grok_generate_catalog.py" ]]; then
   python3 "$ROOT/grok_generate_catalog.py" >/dev/null 2>&1 || true
 fi
 if compgen -G "$ROOT/resolve/ui/*.swift" >/dev/null; then
-  swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT"/resolve/ui/*.swift -framework AppKit 2>/dev/null || true
+  PLIST="$ROOT/resolve/ui/Info.plist"
+  if [[ -f "$PLIST" ]]; then
+    swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT"/resolve/ui/*.swift -framework AppKit \
+      -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker "$PLIST" 2>/dev/null || true
+  else
+    swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT"/resolve/ui/*.swift -framework AppKit 2>/dev/null || true
+  fi
 fi
 
 echo "installed $UTIL_DEST/Grok.lua"
-echo "Workspace -> Scripts -> Grok"
+echo "Workspace -> Scripts -> Grok  (Grok for Resolve)"
+echo "UI panels and Terminal tabs are labeled Grok for Resolve"
 echo "Resolve Free: Lua menu (Python UI not supported since 19.1)"

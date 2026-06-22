@@ -1,0 +1,18 @@
+#!/bin/bash
+# Shared trust banner — sourced or called by Grok launchers.
+grok_trust_banner() {
+  local action="${1:-Workflow}"
+  local root="${2:-}"
+  cat <<EOF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Grok for DaVinci Resolve
+  Launched from: Workspace → Scripts → Grok
+  Action: ${action}
+  Project folder: ${root}
+  Repo: fornevercollective/grok-public-folder
+  Uses: local scripts + x.ai API (your XAI_API_KEY only)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EOF
+}

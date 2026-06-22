@@ -3,16 +3,19 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT" || exit 1
+# shellcheck source=/dev/null
+source "$ROOT/bin/grok-trust"
 
-echo "Grok video generate"
-echo "folder: $ROOT"
+grok_trust_banner "Generate Video" "$ROOT"
 
 if [[ -z "${XAI_API_KEY:-}" ]]; then
   echo ""
   echo "ERROR: XAI_API_KEY is not set."
+  echo "This Grok workflow talks only to x.ai using your own API key."
   echo "Run:  export XAI_API_KEY=your-key"
   echo "Key:  https://console.x.ai"
   exit 1
 fi
 
+echo "Starting x.ai video generation…"
 exec python3 "$ROOT/grok_menu_cli.py" generate "$@"
