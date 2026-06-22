@@ -81,3 +81,20 @@ function grok_import_active()
     print("imported " .. count .. " into " .. bin_name)
     return imported
 end
+
+function grok_import_verbose()
+    local files = grok_list_files()
+    if #files == 0 then
+        print("no files in video/ or image/")
+        print("folder " .. ARTIFACTS)
+        print("download from grok.com or run bin/scan first")
+        return nil
+    end
+
+    print("importing " .. #files .. " file(s) from " .. ARTIFACTS)
+    for _, path in ipairs(files) do
+        print("  " .. path:match("([^/]+)$"))
+    end
+    print("select target bin in media pool before import")
+    return grok_import_active()
+end
