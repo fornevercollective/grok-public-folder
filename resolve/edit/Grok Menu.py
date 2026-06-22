@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Workspace -> Scripts -> Utility -> Grok Menu"""
+"""Workspace -> Scripts -> Edit -> Grok Menu"""
 
 import subprocess
 import sys
@@ -20,6 +20,7 @@ ui = fusion.UIManager
 dispatcher = bmd.UIDispatcher(ui)
 win_id = "com.grok.resolve.menu"
 STORY_PATH = Path(GROK_ROOT) / "project/stories/dusk-to-neon.json"
+CONSOLE_SNIPPET = f'exec(open("{GROK_ROOT}/grok_load.py").read(), globals())'
 
 
 def format_inventory() -> str:
@@ -130,6 +131,15 @@ def on_bridge(ev):
     win.Find("status").Text = "started bin/bridge in terminal\nset XAI_API_KEY first"
 
 
+def on_console(ev):
+    win.Find("status").Text = (
+        "python console (switch to Py3):\n"
+        f"{CONSOLE_SNIPPET}\n\n"
+        "lua console:\n"
+        f'dofile("{GROK_ROOT}/resolve/lua/grok_bridge.lua")'
+    )
+
+
 def on_refresh(ev):
     win.Find("status").Text = format_inventory()
 
@@ -203,7 +213,7 @@ if existing:
     win = existing
 else:
     win = dispatcher.AddWindow(
-        {"ID": win_id, "WindowTitle": "Grok Menu", "Geometry": [90, 90, 580, 560]},
+        {"ID": win_id, "WindowTitle": "Grok Menu", "Geometry": [90, 90, 580, 580]},
         ui.VGroup([
             ui.Label({"Text": "grok menu", "Weight": 0}),
             ui.Label({"Text": f"bootstrap  scan  import  generate  |  {featured}", "Weight": 0}),
@@ -217,7 +227,7 @@ else:
                 ui.Button({"ID": "preview", "Text": "Preview"}),
                 ui.Button({"ID": "folder", "Text": "Open Folder"}),
                 ui.Button({"ID": "bridge", "Text": "Start Bridge"}),
-                ui.Button({"ID": "refresh", "Text": "Refresh"}),
+                ui.Button({"ID": "console", "Text": "Console"}),
             ]),
             ui.HGroup([
                 ui.Label({"Text": "slug", "Weight": 0}),
@@ -242,6 +252,7 @@ else:
     win.On["preview"].Clicked = on_preview
     win.On["folder"].Clicked = on_folder
     win.On["bridge"].Clicked = on_bridge
+    win.On["console"].Clicked = on_console
     win.On["refresh"].Clicked = on_refresh
     win.On["slug_preview"].Clicked = on_slug_preview
     win.On["generate"].Clicked = on_generate

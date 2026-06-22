@@ -2,17 +2,16 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-DEST="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Utility"
+SCRIPTS="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts"
+EDIT_DEST="$SCRIPTS/Edit"
 
-mkdir -p "$DEST"
+# Utility scripts repeat under Comp / Edit / Color / Deliver on every page.
+# Install only under Edit so Grok appears once: Workspace -> Scripts -> Edit -> Grok Menu
 
-KEEP=(
+GROK_NAMES=(
   "Grok Menu.py"
-  "Grok Console.py"
   "Grok Bootstrap.lua"
-)
-
-REMOVE=(
+  "Grok Console.py"
   "Import Grok Artifacts.py"
   "Import Grok Artifacts.lua"
   "Grok Panel.py"
@@ -20,16 +19,19 @@ REMOVE=(
   "Grok Console Import.py"
 )
 
-for file in "${REMOVE[@]}"; do
-  rm -f "$DEST/$file"
+for dir in Utility Comp Tool Edit Color Deliver Fairlight; do
+  target="$SCRIPTS/$dir"
+  [[ -d "$target" ]] || continue
+  for file in "${GROK_NAMES[@]}"; do
+    rm -f "$target/$file"
+  done
+  rm -rf "$target/__pycache__"
 done
 
-for file in "${KEEP[@]}"; do
-  cp "$ROOT/resolve/utility/$file" "$DEST/"
-done
+mkdir -p "$EDIT_DEST"
+cp "$ROOT/resolve/edit/Grok Menu.py" "$EDIT_DEST/"
+chmod +x "$EDIT_DEST/Grok Menu.py" 2>/dev/null || true
 
-chmod +x "$DEST/"*.py 2>/dev/null || true
-
-echo "installed grok resolve scripts to"
-echo "$DEST"
-echo "menu: Workspace -> Scripts -> Utility -> Grok Menu"
+echo "installed grok resolve script to"
+echo "$EDIT_DEST/Grok Menu.py"
+echo "open: Workspace -> Scripts -> Edit -> Grok Menu"
