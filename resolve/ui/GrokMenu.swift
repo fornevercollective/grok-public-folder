@@ -22,7 +22,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
     private var promptDefault = ""
     private var alertTitle = "Grok"
     private var alertMessage = ""
-    private var generateController: GeneratePanelController?
+    private var canvasController: CanvasWindowController?
     private var windowClosers: [WindowCloser] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -33,7 +33,8 @@ final class GrokApp: NSObject, NSApplicationDelegate {
 
         switch mode {
         case "choose":
-            showChooseMenu()
+            ensureCatalog()
+            showCanvas()
         case "prompt":
             promptTitle = args.dropFirst().first ?? "Grok"
             promptDefault = args.dropFirst().dropFirst().joined(separator: " ")
@@ -103,49 +104,15 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         return button
     }
 
-    private func showChooseMenu() {
-        let window = makeWindow(width: 380, height: 480, title: GrokBrand.appName)
-        let root = NSView()
-        root.translatesAutoresizingMaskIntoConstraints = false
-
-        let header = UIHelpers.headerView(title: GrokBrand.appName, subtitle: "Imagine → folder → Resolve edit")
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.spacing = 2
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.edgeInsets = NSEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
-
-        for item in MenuItems.all {
-            let button = actionButton(item, action: #selector(menuChosen(_:)))
-            button.identifier = NSUserInterfaceItemIdentifier(item)
-            stack.addArrangedSubview(button)
+    private func showCanvas() {
+        let catalog = CatalogStore.load()
+        let controller = CanvasWindowController(catalog: catalog)
+        canvasController = controller
+        controller.onComplete = { [weak self] output in
+            self?.resultLine = output
+            self?.finish()
         }
-
-        let trust = UIHelpers.trustFooter()
-
-        root.addSubview(header)
-        root.addSubview(stack)
-        root.addSubview(trust)
-        window.contentView = root
-
-        NSLayoutConstraint.activate([
-            header.topAnchor.constraint(equalTo: root.topAnchor, constant: 18),
-            header.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            header.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            stack.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 6),
-            stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            trust.bottomAnchor.constraint(equalTo: root.bottomAnchor),
-            trust.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            trust.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-        ])
-
-        present(window)
-    }
-
-    @objc private func menuChosen(_ sender: NSButton) {
-        resultLine = sender.title
-        finish()
+        controller.show()
     }
 
     private func showPrompt() {
@@ -199,14 +166,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
     }
 
     private func showGenerateForm() {
-        let catalog = CatalogStore.load()
-        let controller = GeneratePanelController(catalog: catalog)
-        generateController = controller
-        controller.onComplete = { [weak self] output in
-            self?.resultLine = output
-            self?.finish()
-        }
-        controller.show()
+        showCanvas()
     }
 
     private func showAlert() {

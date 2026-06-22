@@ -40,10 +40,10 @@ fi
 if compgen -G "$ROOT/resolve/ui/*.swift" >/dev/null; then
   PLIST="$ROOT/resolve/ui/Info.plist"
   if [[ -f "$PLIST" ]]; then
-    swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT"/resolve/ui/*.swift -framework AppKit \
+    swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT"/resolve/ui/*.swift -framework AppKit -framework AVKit -framework AVFoundation \
       -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker "$PLIST" 2>/dev/null || true
   else
-    swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT"/resolve/ui/*.swift -framework AppKit 2>/dev/null || true
+    swiftc -O -o "$ROOT/bin/grok-menu-ui" "$ROOT"/resolve/ui/*.swift -framework AppKit -framework AVKit -framework AVFoundation 2>/dev/null || true
   fi
 fi
 

@@ -6,16 +6,6 @@ local MENU_UI = GROK_ROOT .. "/bin/grok-menu"
 local APP_NAME = "Grok for Resolve"
 local APP_SOURCE = "DaVinci Resolve → Workspace → Scripts → Grok"
 
-local MENU_ITEMS = {
-    "Bootstrap",
-    "Scan Downloads",
-    "Import",
-    "Scan + Import",
-    "Open Folder",
-    "Start Bridge",
-    "Generate Video",
-}
-
 local function trim(text)
     if not text then
         return ""
@@ -65,10 +55,6 @@ local function trust_terminal_message(action, detail)
         "Safe workflow: local scripts in grok-public-folder + x.ai API (your XAI_API_KEY only)."
 end
 
-local function choose_action()
-    return run_menu_ui("choose")
-end
-
 local function parse_field(line, key)
     if line:sub(1, #key + 1) == key .. ":" then
         return trim(line:sub(#key + 2))
@@ -76,34 +62,30 @@ local function parse_field(line, key)
     return nil
 end
 
-local function prompt_generate()
-    local output = run_menu_ui("generate")
-    if not output then
-        return nil
-    end
-    local result = {}
+local function parse_menu_output(output)
+    local action = nil
+    local opts = {}
     for line in output:gmatch("[^\r\n]+") do
+        if line:sub(1, 7) == "ACTION:" then
+            action = trim(line:sub(8))
+        end
         for _, key in ipairs({
             "SLUG", "PROMPT", "DURATION", "RESOLUTION", "ASPECT",
-            "LUT", "PROMPT_ADD", "CONTINUITY",
+            "LUT", "PROMPT_ADD", "CONTINUITY", "REFERENCE",
         }) do
             local value = parse_field(line, key)
             if value then
-                result[key] = value
+                opts[key] = value
             end
         end
     end
-    if not result.SLUG or not result.PROMPT or result.SLUG == "" or result.PROMPT == "" then
-        return nil
-    end
-    return result
+    return action, opts
 end
 
 local function open_terminal(command, label)
-    local launcher = TERMINAL_LAUNCHER
     local escaped_cmd = command:gsub("'", "'\\''")
     local escaped_label = (label or "Workflow"):gsub("'", "'\\''")
-    os.execute("'" .. launcher .. "' '" .. escaped_cmd .. "' '" .. escaped_label .. "'")
+    os.execute("'" .. TERMINAL_LAUNCHER .. "' '" .. escaped_cmd .. "' '" .. escaped_label .. "'")
 end
 
 local function run_python_background(subcmd)
@@ -113,13 +95,7 @@ local function run_python_background(subcmd)
     os.execute(cmd)
 end
 
-local function action_generate()
-    local opts = prompt_generate()
-    if not opts then
-        alert("Grok", "Generate cancelled")
-        return
-    end
-
+local function build_generate_cmd(opts)
     local parts = {
         GROK_ROOT .. "/bin/generate",
         "--slug", shell_quote(opts.SLUG),
@@ -149,7 +125,15 @@ local function action_generate()
         table.insert(parts, "--continuity")
         table.insert(parts, shell_quote(opts.CONTINUITY))
     end
-    local gen_cmd = table.concat(parts, " ")
+    return table.concat(parts, " ")
+end
+
+local function action_generate(opts)
+    if not opts or not opts.SLUG or not opts.PROMPT then
+        alert("Grok", "Generate cancelled")
+        return
+    end
+    local gen_cmd = build_generate_cmd(opts)
     alert("Opening Terminal", trust_terminal_message(
         "Generate Video",
         "Terminal tab title: Grok · Generate Video\nRuns: bin/generate → x.ai video API → saves to video/"
@@ -184,16 +168,28 @@ local function dispatch(choice)
     elseif choice == "Start Bridge" then
         action_bridge()
     elseif choice == "Generate Video" then
-        action_generate()
+        -- handled via canvas generate output
+    elseif choice == "Scan + Import" then
+        run_python_background("scan")
+        grok_import_verbose()
     else
         alert("Grok", "Unknown choice: " .. tostring(choice))
     end
 end
 
-local choice = choose_action()
-if choice then
-    print("grok: " .. choice)
-    dispatch(choice)
+local output = run_menu_ui("choose")
+if not output then
+    print("grok menu cancelled")
+    return
+end
+
+local action, opts = parse_menu_output(output)
+if action == "Generate Video" and opts.SLUG and opts.PROMPT then
+    print("grok: Generate Video")
+    action_generate(opts)
+elseif action then
+    print("grok: " .. action)
+    dispatch(action)
 else
     print("grok menu cancelled")
 end

@@ -25,10 +25,10 @@ needs_rebuild() {
 
 if needs_rebuild; then
   if [[ -f "$PLIST" ]]; then
-    swiftc -O -o "$BIN" "$UI_DIR"/*.swift -framework AppKit \
+    swiftc -O -o "$BIN" "$UI_DIR"/*.swift -framework AppKit -framework AVKit -framework AVFoundation \
       -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker "$PLIST" 2>/dev/null || true
   else
-    swiftc -O -o "$BIN" "$UI_DIR"/*.swift -framework AppKit 2>/dev/null || true
+    swiftc -O -o "$BIN" "$UI_DIR"/*.swift -framework AppKit -framework AVKit -framework AVFoundation 2>/dev/null || true
   fi
 fi
 
