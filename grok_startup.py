@@ -178,7 +178,9 @@ def main() -> int:
     print(format_report(config, resolve_result))
     if resolve_result:
         return 0
-    print("\nfolder + presets ready — resolve bootstrap needs External scripting → Local")
+    print("\nfolder + presets ready")
+    print("resolve bootstrap: use Workspace → Scripts → Utility → Grok Bootstrap")
+    print("(Terminal link requires Resolve Studio + External scripting → Local)")
     return 0
 
 

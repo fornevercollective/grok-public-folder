@@ -46,17 +46,22 @@ def connection_help() -> str:
         lines.append("resolve process: not detected — open DaVinci Resolve first")
     else:
         lines.append("resolve process: running")
-        lines.append("terminal link: not connected (external scripting)")
+        lines.append("terminal link: not connected")
     lines.extend(
         [
             "",
-            "one-time fix for bin/startup from Terminal:",
-            "  DaVinci Resolve → Preferences → System → General",
-            "  External scripting using → Local",
-            "  quit and reopen Resolve, then run bin/startup again",
+            "why bin/startup from Terminal often fails:",
+            "  Resolve Free (19.1+) removed external scripting — there is no",
+            "  'External scripting using' setting to enable. System → General",
+            "  may not show it at all (Video Plugins is a different page).",
             "",
-            "works immediately without that setting:",
-            "  Workspace → Scripts → Utility → Grok Startup → Bootstrap Project",
+            "use Resolve Free workflow (no Terminal link needed):",
+            "  Workspace → Scripts → Utility → Grok Bootstrap",
+            "  or Grok Startup → Bootstrap Project",
+            "",
+            "Resolve Studio only (paid license):",
+            "  Preferences → System → General → External scripting using → Local",
+            "  then bin/startup works from Terminal",
         ]
     )
     return "\n".join(lines)
@@ -84,7 +89,10 @@ def diagnose() -> dict:
             project = resolve.GetProjectManager().GetCurrentProject()
             info["project"] = project.GetName() if project else None
         elif info["process_running"]:
-            info["error"] = "scriptapp returned None — enable External scripting using → Local"
+            info["error"] = (
+                "scriptapp returned None — likely Resolve Free (no external scripting). "
+                "Use Utility → Grok Bootstrap inside Resolve."
+            )
         else:
             info["error"] = "resolve not running"
     except Exception as exc:
