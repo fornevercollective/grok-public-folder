@@ -81,6 +81,6 @@ function grok_bootstrap_startup()
     end
     print("bins " .. #created)
     print("active bin " .. IMPORT_BIN)
-    print("done — generate in Grok Startup or bin/grok, then Import")
+    print("done — generate in Grok Menu or bin/grok, then Import")
     return true
 end

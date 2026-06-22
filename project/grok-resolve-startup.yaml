@@ -51,7 +51,7 @@ pipe:
   editing:
     repo: https://github.com/fornevercollective/grok-public-folder
     entry: bin/bridge
-    resolve: Workspace → Scripts → Utility → Grok Startup
+    resolve: Workspace → Scripts → Utility → Grok Menu
     import_bin: 03_clips/grok_generated
   # Training lane: Colossus (JAX cluster) + Dojo (Rust perf) via grok-repo-template
   training:

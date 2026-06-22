@@ -1,0 +1,54 @@
+{
+  "project": {
+    "name": "grok-resolve-startup",
+    "brand_title": "Grok Resolve Startup \u2014 Imagine / Colossus / Dojo Pipe",
+    "version": 1
+  },
+  "resolve": {
+    "timeline_width": 3840,
+    "timeline_height": 2160,
+    "timeline_frame_rate": 23.976,
+    "color_space": "DaVinci Wide Gamut",
+    "gamma": "DaVinci Intermediate"
+  },
+  "generation": {
+    "aspect_ratio": "16:9",
+    "resolution": "720p",
+    "duration_sec": 10,
+    "default_story": "project/stories/dusk-to-neon.json"
+  },
+  "import_target_bin": "03_clips/grok_generated",
+  "featured_slugs": [
+    "neo-noir",
+    "cyberpunk-neon",
+    "teal-orange-blockbuster",
+    "anamorphic-cinematic",
+    "kodak-portra-400",
+    "dune-sci-fi",
+    "golden-hour-romance",
+    "vintage-35mm"
+  ],
+  "all_slug_count": 75,
+  "pipe": {
+    "generation": {
+      "repo": "https://github.com/fornevercollective/imagine",
+      "entry": "style_presets/<slug>/prompt.txt",
+      "stories": "stories/*.json",
+      "output": "video/ and image/"
+    },
+    "editing": {
+      "repo": "https://github.com/fornevercollective/grok-public-folder",
+      "entry": "bin/bridge",
+      "resolve": "Workspace \u2192 Scripts \u2192 Utility \u2192 Grok Startup",
+      "import_bin": "03_clips/grok_generated"
+    },
+    "training": {
+      "repo": "https://github.com/fornevercollective/grok-repo-template",
+      "colossus_slug": "jax-colossus",
+      "dojo_slug": "rust-dojo",
+      "config": "configs/colossus.yaml",
+      "launch": "scripts/colossus-launch.sh",
+      "ingest_from": "06_exports"
+    }
+  }
+}
