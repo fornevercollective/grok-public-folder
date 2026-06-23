@@ -15,6 +15,7 @@ streaming/overlay.json
 streaming/overlay.html
 streaming/rtmp.template.json
 project/grok-secrets.env
+project/.grok-root
 project/timeline-grok-clips.json
 project/timeline-batch-save.json
 bridge/timeline-batch.json

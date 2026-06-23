@@ -1,6 +1,7 @@
 {
   "version": 1,
   "preset_count": 75,
+  "cinematic_pack_count": 50,
   "defaults": {
     "slug": "neo-noir",
     "prompt": "woman in rain on empty street at night",
@@ -12,6 +13,939 @@
     "continuity_notes": ""
   },
   "groups": [
+    {
+      "id": "cinematic_pack",
+      "label": "Cinematic Pack (50)",
+      "presets": [
+        {
+          "slug": "neo-noir",
+          "display": "Neo-Noir",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "noir",
+            "color",
+            "rain",
+            "urban"
+          ],
+          "best_for": "moody urban portraits, night rain, thriller",
+          "notes": "Color evolution of classic noir.",
+          "prompt_preview": "neo-noir cinematic, modern color noir, desaturated palette with pops of red or neon, rain soaked streets, reflections, trench coat, moody underlit face, high contrast, anamorphic lens flares, dark urban atmosphere, film \u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "film-noir",
+          "display": "Film Noir",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "bw",
+            "noir",
+            "dramatic",
+            "shadows"
+          ],
+          "best_for": "dramatic B&W portraits, mystery, shadows",
+          "notes": "The original cinematic B&W look.",
+          "prompt_preview": "classic film noir cinematic style, high contrast black and white, deep impenetrable shadows, bright specular highlights, venetian blind shadows on face, cigarette smoke, rain on window, 1940s-50s hardboiled detective moo\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "cyberpunk-neon",
+          "display": "Cyberpunk Neon",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "cyberpunk",
+            "neon",
+            "night",
+            "future"
+          ],
+          "best_for": "night futuristic, neon portraits, sci-fi action",
+          "notes": "The ultimate neon rain cyber look.",
+          "prompt_preview": "cyberpunk cinematic, dense neon magenta cyan and electric blue signs, heavy rain, wet reflective streets and puddles, high contrast, strong backlight, holographic elements, futuristic dystopian Tokyo night, anamorphic fl\u2026",
+          "thumbnail": {
+            "kind": "url",
+            "path": "https://raw.githubusercontent.com/fornevercollective/imagine/main/assets/iterations/cyberpunk-neon.jpg"
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "teal-orange-blockbuster",
+          "display": "Teal Orange Blockbuster",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "teal-orange",
+            "hollywood",
+            "action"
+          ],
+          "best_for": "epic portraits, action, commercial cinematic",
+          "notes": "The most overused (but effective) modern cinematic grade.",
+          "prompt_preview": "modern Hollywood blockbuster cinematic LUT, classic teal and orange color grade, cool teal shadows, warm orange skin highlights, high contrast, crushed blacks, lifted shadows slightly, anamorphic lens characteristics, ep\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": true
+        },
+        {
+          "slug": "western-sepia",
+          "display": "Western Sepia / Dusty",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "western",
+            "sepia",
+            "dusty",
+            "vintage"
+          ],
+          "best_for": "western, desert, rugged portraits, period",
+          "notes": "Ties into existing Spaghetti Western featured template.",
+          "prompt_preview": "spaghetti western / classic western cinematic, warm sepia and tobacco tones, dusty hazy atmosphere, harsh midday sun, deep shadows, golden hour backlight, leather and denim textures, high contrast with crushed blacks, he\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "horror-grain",
+          "display": "Horror / Desaturated Grain",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "horror",
+            "grain",
+            "desaturated",
+            "eerie"
+          ],
+          "best_for": "eerie portraits, dark scenes, tension",
+          "notes": "Creepy, skin looks unhealthy, dread inducing.",
+          "prompt_preview": "horror movie cinematic, desaturated color almost monochrome with sickly green or blue push in shadows, high grain, heavy vignette, deep blacks, low key lighting, unsettling atmosphere, found footage or 70s horror film lo\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "dune-sci-fi",
+          "display": "Dune Sci-Fi Epic",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "sci-fi",
+            "desert",
+            "epic",
+            "denis"
+          ],
+          "best_for": "epic wide shots, sci-fi portraits, grand scale",
+          "notes": "Modern epic sci-fi reference (Dune 2021/24).",
+          "prompt_preview": "Dune / epic sci-fi cinematic, vast desert scale, orange and teal but more muted and sandy than blockbuster, extreme contrast between bright sun and deep shadow, practical lens flares, IMAX scale, dry dusty air, monumenta\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "golden-hour-romance",
+          "display": "Golden Hour Romance",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "romance",
+            "warm",
+            "golden",
+            "soft"
+          ],
+          "best_for": "romance, couples, beauty in warm light",
+          "notes": "The most flattering cinematic for people.",
+          "prompt_preview": "romantic golden hour cinematic, warm honey and amber tones, soft glowing backlight, lens flare, bokeh, shallow depth of field, skin beautifully wrapped in golden light, dreamy soft focus, pastel peach and cream palette, \u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "vhs-80s",
+          "display": "VHS 80s / Lo-fi",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "vhs",
+            "80s",
+            "lofi",
+            "analog"
+          ],
+          "best_for": "80s nostalgia, retro video, lo-fi music video",
+          "notes": "Analog video degradation as aesthetic.",
+          "prompt_preview": "80s VHS / lo-fi analog video look, heavy tracking lines, color bleed, chroma noise, low resolution feel, warm browns and yellows or garish 80s video colors, scan lines, tape wear, home video or straight-to-VHS movie aest\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "anamorphic-cinematic",
+          "display": "Anamorphic Cinematic",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "anamorphic",
+            "lens",
+            "flares",
+            "widescreen"
+          ],
+          "best_for": "any cinematic, adds instant production value",
+          "notes": "Lens characteristics more than color grade. Combine with others.",
+          "prompt_preview": "shot on anamorphic lenses (2.39:1 or 2.35), characteristic blue or amber horizontal lens flares, oval bokeh, slight edge softness and breathing, widescreen epic framing, high end cinema camera look, subtle barrel distort\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "ethereal-fantasy",
+          "display": "Ethereal Fantasy",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "fantasy",
+            "ethereal",
+            "glow",
+            "soft"
+          ],
+          "best_for": "fantasy portraits, magical scenes, beauty",
+          "notes": "Soft magical glow fantasy.",
+          "prompt_preview": "ethereal high fantasy cinematic, soft glowing rim light, magical god rays, pastel and iridescent highlights, high key with lifted shadows, skin luminous, floating particles, dreamy shallow depth, Lord of the Rings / Stud\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "gritty-documentary",
+          "display": "Gritty Documentary",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "documentary",
+            "gritty",
+            "natural",
+            "handheld"
+          ],
+          "best_for": "realism, street, interview style, authentic",
+          "notes": "Anti-glamour, truth seeking look.",
+          "prompt_preview": "gritty documentary cinematic, available light only, slightly under exposed, natural skin with imperfections, subtle teal push in shadows, handheld camera feel, 16mm or Super 16 film grain + digital noise, journalistic, r\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "vintage-35mm",
+          "display": "Vintage 35mm Film Fade",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "vintage",
+            "35mm",
+            "fade",
+            "grain"
+          ],
+          "best_for": "period pieces, nostalgia, emotional memory",
+          "notes": "Aged film print degradation.",
+          "prompt_preview": "vintage 35mm film print look, faded colors, yellowing in highlights, heavy but organic grain, slight gate weave, dirt and scratches, 70s-80s movie print degradation, warm faded palette, beautiful for period or nostalgic,\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "moody-teal-drama",
+          "display": "Moody Teal Drama",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinematic",
+            "teal",
+            "moody",
+            "drama",
+            "netflix"
+          ],
+          "best_for": "dramatic character portraits, interior scenes",
+          "notes": "Current 'prestige' TV color science.",
+          "prompt_preview": "moody modern drama / Netflix cinematic, dominant teal and cyan in shadows, warm but controlled skin, high contrast, deep blacks, lifted midtones in a controlled way, very current prestige TV / limited series look, subtle\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "bleach-bypass-lut",
+          "display": "Bleach Bypass / Skip Bleach LUT",
+          "group": "cinematic_pack",
+          "tags": [
+            "lut",
+            "color-correction",
+            "contrast",
+            "desat",
+            "saving-private-ryan"
+          ],
+          "best_for": "gritty war, intense drama, high-contrast looks",
+          "notes": "Classic high-contrast desat film effect.",
+          "prompt_preview": "bleach bypass film process LUT (or digital emulation), desaturated colors with crushed blacks and lifted grainy highlights, high contrast, silvery sheen on skin and metals, used in Saving Private Ryan, 300, many war and \u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": true
+        },
+        {
+          "slug": "teal-orange-hollywood-cc",
+          "display": "Teal Orange Hollywood Cc",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": true
+        },
+        {
+          "slug": "panavision-c-series-anamorphic",
+          "display": "Panavision C-Series Anamorphic Lenses",
+          "group": "cinematic_pack",
+          "tags": [
+            "lens",
+            "anamorphic",
+            "panavision",
+            "distortion",
+            "flares"
+          ],
+          "best_for": "epic widescreen, anamorphic character, classic Hollywood",
+          "notes": "The iconic anamorphic lens package.",
+          "prompt_preview": "shot on vintage Panavision C-Series anamorphic primes (2.35:1 or 2.39:1), characteristic blue horizontal lens flares on bright sources, oval bokeh, subtle barrel distortion and edge softness, slight focus breathing, high\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "cooke-anamorphic",
+          "display": "Cooke Anamorphic /i Lenses",
+          "group": "cinematic_pack",
+          "tags": [
+            "lens",
+            "anamorphic",
+            "cooke",
+            "distortion",
+            "bokeh"
+          ],
+          "best_for": "premium modern anamorphic, beauty in widescreen",
+          "notes": "Warmer, more flattering anamorphic.",
+          "prompt_preview": "shot on Cooke Anamorphic /i series lenses, warm golden flares (less blue than Panavision), smooth oval bokeh, gentle distortion, excellent for skin, modern high-end anamorphic with the classic 'Cooke look' of rounded foc\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "anamorphic-lens-breathing-flare",
+          "display": "Anamorphic Lens Breathing Flare",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "cross-process-e-6-to-c-41",
+          "display": "Cross Process E 6 To C 41",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": true
+        },
+        {
+          "slug": "day-for-night-lut",
+          "display": "Day For Night Lut",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": true
+        },
+        {
+          "slug": "kodak-portra-400",
+          "display": "Kodak Portra 400",
+          "group": "cinematic_pack",
+          "tags": [
+            "kodak",
+            "vsco",
+            "portrait",
+            "natural",
+            "warm",
+            "film"
+          ],
+          "best_for": "portraits, people, soft natural light, lifestyle",
+          "notes": "Classic VSCO favorite. Flattering, low contrast, creamy.",
+          "prompt_preview": "shot on Kodak Portra 400 film stock, natural accurate skin tones, soft pleasing contrast, delicate film grain, creamy highlights, subtle warm color shift, fine detail, analog photography, slight halation in bright areas",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "kodak-ektar-100",
+          "display": "Kodak Ektar 100",
+          "group": "cinematic_pack",
+          "tags": [
+            "kodak",
+            "vsco",
+            "saturated",
+            "vibrant",
+            "landscape"
+          ],
+          "best_for": "landscapes, color pop, product, fashion",
+          "notes": "Punchier, more saturated than Portra.",
+          "prompt_preview": "shot on Kodak Ektar 100 film, highly saturated vibrant colors, punchy contrast, fine grain, rich reds and blues, sharp detail, cinematic film look, slight warmth",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "kodak-gold-200",
+          "display": "Kodak Gold 200",
+          "group": "cinematic_pack",
+          "tags": [
+            "kodak",
+            "vsco",
+            "vintage",
+            "warm",
+            "90s"
+          ],
+          "best_for": "vintage, summer, candid, family photos",
+          "notes": "Iconic warm consumer film look.",
+          "prompt_preview": "shot on Kodak Gold 200 film, warm vintage color palette, golden yellows and oranges, moderate contrast, visible grain, nostalgic 90s snapshot aesthetic, soft skin",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "kodak-ultramax-400",
+          "display": "Kodak Ultramax 400",
+          "group": "cinematic_pack",
+          "tags": [
+            "kodak",
+            "vsco",
+            "everyday",
+            "grainy"
+          ],
+          "best_for": "street, travel, all purpose",
+          "notes": "Modern everyday Kodak stock.",
+          "prompt_preview": "shot on Kodak Ultramax 400, everyday film look, balanced warm tones, medium grain, good skin rendition, slightly soft focus, versatile snapshot film photography",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "kodak-tri-x-400-bw",
+          "display": "Kodak Tri-X 400 (B&W)",
+          "group": "cinematic_pack",
+          "tags": [
+            "kodak",
+            "bw",
+            "vsco",
+            "grain",
+            "classic"
+          ],
+          "best_for": "dramatic portraits, street, documentary",
+          "notes": "The classic B&W film grain king.",
+          "prompt_preview": "shot on Kodak Tri-X 400 black and white film, classic high contrast B&W, prominent grain, deep blacks, bright whites, documentary photojournalism aesthetic, strong tonality",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "fuji-velvia-50",
+          "display": "Fuji Velvia 50",
+          "group": "cinematic_pack",
+          "tags": [
+            "fuji",
+            "vsco",
+            "saturated",
+            "landscape",
+            "vivid"
+          ],
+          "best_for": "nature, travel, bold color, scenery",
+          "notes": "Most saturated film stock. Great for epic landscapes.",
+          "prompt_preview": "shot on Fuji Velvia 50 slide film, extremely saturated vivid colors, high contrast, rich greens and reds, fine grain, landscape and nature film look, almost hyper real",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "fuji-superia-400",
+          "display": "Fuji Superia 400",
+          "group": "cinematic_pack",
+          "tags": [
+            "fuji",
+            "vsco",
+            "90s",
+            "consumer",
+            "grain"
+          ],
+          "best_for": "90s nostalgia, street, candid",
+          "notes": "Popular 90s point-and-shoot film.",
+          "prompt_preview": "shot on Fuji Superia 400 film, 90s consumer film colors, slightly cool greens, natural skin with film shift, visible grain, everyday nostalgic look",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "fuji-pro-400h",
+          "display": "Fuji Pro 400H",
+          "group": "cinematic_pack",
+          "tags": [
+            "fuji",
+            "vsco",
+            "portrait",
+            "professional",
+            "soft"
+          ],
+          "best_for": "weddings, portraits, soft beauty",
+          "notes": "Beloved by wedding photographers.",
+          "prompt_preview": "shot on Fuji Pro 400H professional film, beautiful skin tones with slight green bias, soft contrast, smooth gradation, fine grain, wedding and portrait film classic",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "fuji-acros-100-bw",
+          "display": "Fuji Acros 100 (B&W)",
+          "group": "cinematic_pack",
+          "tags": [
+            "fuji",
+            "bw",
+            "vsco",
+            "fine-grain",
+            "portrait"
+          ],
+          "best_for": "fine art, architecture, delicate portraits",
+          "notes": "One of the finest grain B&W films.",
+          "prompt_preview": "shot on Fuji Acros 100 black & white, extremely fine grain, excellent tonality and shadow detail, smooth creamy B&W, subtle warmth in highlights, architectural and portrait classic",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "fuji-eterna-500",
+          "display": "Fuji Eterna 500",
+          "group": "cinematic_pack",
+          "tags": [
+            "fuji",
+            "cinematic",
+            "movie",
+            "low-contrast"
+          ],
+          "best_for": "cinematic video stills, narrative, low contrast beauty",
+          "notes": "Real movie film stock. Perfect base for video too.",
+          "prompt_preview": "shot on Fuji Eterna 500 motion picture film, low contrast cinematic look, soft colors, beautiful skin, designed for movies, subtle grain, telecine film look",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "cinestill-50d",
+          "display": "Cinestill 50D",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinestill",
+            "cinematic",
+            "halations",
+            "daylight"
+          ],
+          "best_for": "cinematic portraits, golden hour, night lights with glow",
+          "notes": "Popular 'movie film' look with signature halation.",
+          "prompt_preview": "shot on Cinestill 50D (Kodak Vision3 50D motion picture film, remjet removed), cinematic halation glow in highlights, vibrant yet natural colors, fine grain, beautiful for daylight and golden hour, red halation around br\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "cinestill-800t",
+          "display": "Cinestill 800T",
+          "group": "cinematic_pack",
+          "tags": [
+            "cinestill",
+            "cinematic",
+            "night",
+            "tungsten",
+            "halations"
+          ],
+          "best_for": "night scenes, neon, urban, moody cinematic",
+          "notes": "The go-to for cinematic night + neon glows.",
+          "prompt_preview": "shot on Cinestill 800T tungsten balanced motion picture film (remjet removed), strong red/orange halation around practical lights and neons, cinematic night look, pushed grain, teal shadows, very filmic and atmospheric",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "ilford-hp5-400-bw",
+          "display": "Ilford HP5 Plus 400 (B&W)",
+          "group": "cinematic_pack",
+          "tags": [
+            "ilford",
+            "bw",
+            "vsco",
+            "versatile",
+            "grain"
+          ],
+          "best_for": "street photography, documentary, dramatic B&W",
+          "notes": "Workhorse B&W film.",
+          "prompt_preview": "shot on Ilford HP5 Plus 400 black and white, versatile high speed B&W, pronounced but pleasing grain, good shadow detail, classic documentary and street photography look, can be pushed for more contrast/grain",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "kodachrome-64",
+          "display": "Kodachrome 64",
+          "group": "cinematic_pack",
+          "tags": [
+            "kodak",
+            "slide",
+            "vintage",
+            "saturated",
+            "iconic"
+          ],
+          "best_for": "iconic vintage color, travel, documentary",
+          "notes": "The most famous slide film ever.",
+          "prompt_preview": "shot on Kodachrome 64 slide film, legendary vibrant yet natural colors, famous for reds and skin, high sharpness, fine grain, iconic National Geographic and 70s-80s photojournalism look, warm slide film rendering",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "kodak-vision3-500t",
+          "display": "Kodak Vision3 500T (Motion Picture)",
+          "group": "cinematic_pack",
+          "tags": [
+            "kodak",
+            "motion-picture",
+            "cinematic",
+            "lut",
+            "night",
+            "tungsten"
+          ],
+          "best_for": "cinematic video, night interiors, feature film look",
+          "notes": "The gold standard 500T negative for modern features.",
+          "prompt_preview": "shot on Kodak Vision3 500T 35mm motion picture negative film, tungsten balanced, rich blacks, beautiful skin under mixed lighting, fine grain structure when scanned, subtle halation, classic Hollywood night look, color c\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": true
+        },
+        {
+          "slug": "fuji-eterna-250d",
+          "display": "Fuji Eterna 250D (Motion Picture)",
+          "group": "cinematic_pack",
+          "tags": [
+            "fuji",
+            "motion-picture",
+            "cinematic",
+            "lut",
+            "daylight"
+          ],
+          "best_for": "day exterior cinematic, soft drama",
+          "notes": "Low-con filmic alternative to Vision3.",
+          "prompt_preview": "shot on Fuji Eterna 250D motion picture film, daylight balanced, low contrast cinematic with soft rolloff, excellent highlight handling, fine grain, used in many Asian and European features, natural color science with ge\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": true
+        },
+        {
+          "slug": "arri-alexa-logc-to-rec709",
+          "display": "ARRI Alexa LogC to Rec.709 (Digital Cinema LUT)",
+          "group": "cinematic_pack",
+          "tags": [
+            "arri",
+            "digital-cinema",
+            "lut",
+            "color-correction",
+            "logc"
+          ],
+          "best_for": "high-end digital cinema, commercials, prestige TV",
+          "notes": "The modern digital 'film' standard.",
+          "prompt_preview": "ARRI Alexa 35 or Mini LF LogC capture, color corrected with official ARRI LogC to Rec.709 LUT, natural yet cinematic dynamic range, beautiful highlight rolloff, subtle green/magenta bias in shadows controllable, used on \u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": true
+        },
+        {
+          "slug": "heavy-35mm-film-grain-gate-weave",
+          "display": "Heavy 35mm Film Grain + Gate Weave + Dirt",
+          "group": "cinematic_pack",
+          "tags": [
+            "film-effect",
+            "grain",
+            "weave",
+            "dirt",
+            "scratches",
+            "analog"
+          ],
+          "best_for": "authentic film look, period, gritty realism",
+          "notes": "Add on top of any stock LUT for real film feel.",
+          "prompt_preview": "scanned 35mm film print with heavy organic grain (visible even in highlights), natural gate weave (subtle random frame shift), occasional light dirt specks and hair in gate, small scratches on print, film flicker in high\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "spaghetti-western",
+          "display": "Spaghetti Western",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "future-past",
+          "display": "Future Past",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "roman-empire",
+          "display": "Roman Empire",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "ad-astra",
+          "display": "Ad Astra",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "70s-street-style",
+          "display": "70S Street Style",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "haze-portrait",
+          "display": "Haze Portrait",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "laser-fight",
+          "display": "Laser Fight",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "sunny-morning",
+          "display": "Sunny Morning",
+          "group": "cinematic_pack",
+          "tags": [],
+          "best_for": "",
+          "notes": "",
+          "prompt_preview": "",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "dark-academia",
+          "display": "Dark Academia",
+          "group": "cinematic_pack",
+          "tags": [
+            "pinterest",
+            "moody",
+            "academic",
+            "browns",
+            "library"
+          ],
+          "best_for": "portraits, indoor, fall/winter, intellectual vibe",
+          "notes": "Classic Pinterest dark moody academia.",
+          "prompt_preview": "dark academia aesthetic, moody university library, rich browns, deep forest greens, burgundy, tweed textures, leather books, dramatic window light, chiaroscuro lighting, vintage scholarly atmosphere, filmic desaturated c\u2026",
+          "thumbnail": {
+            "kind": "url",
+            "path": "https://raw.githubusercontent.com/fornevercollective/imagine/main/assets/iterations/dark-academia.jpg"
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "cottagecore",
+          "display": "Cottagecore",
+          "group": "cinematic_pack",
+          "tags": [
+            "pinterest",
+            "cozy",
+            "rural",
+            "soft",
+            "pastel"
+          ],
+          "best_for": "portraits in nature, feminine, cozy scenes",
+          "notes": "Romanticizing simple rural life.",
+          "prompt_preview": "cottagecore aesthetic, romantic rural fantasy, soft pastels, floral details, natural light through lace curtains, handwritten letters vibe, overgrown gardens, cozy cardigans, dreamy filmic soft focus, warm gentle color g\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "cybercore",
+          "display": "Cybercore",
+          "group": "cinematic_pack",
+          "tags": [
+            "pinterest",
+            "cyber",
+            "tech",
+            "neon",
+            "futuristic"
+          ],
+          "best_for": "fashion tech, futuristic portraits, night urban",
+          "notes": "More fashion focused than full cyberpunk.",
+          "prompt_preview": "cybercore / techwear aesthetic, cyberpunk fashion without the full dystopia, black tech fabrics, reflective details, LED accents, cool blue and purple lighting, futuristic clean, high contrast cinematic, subtle matrix co\u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        }
+      ]
+    },
     {
       "id": "featured",
       "label": "Featured",
@@ -931,26 +1865,6 @@
       "label": "Cinematic Genre",
       "presets": [
         {
-          "slug": "film-noir",
-          "display": "Film Noir",
-          "group": "cinematic_genre",
-          "tags": [
-            "cinematic",
-            "bw",
-            "noir",
-            "dramatic",
-            "shadows"
-          ],
-          "best_for": "dramatic B&W portraits, mystery, shadows",
-          "notes": "The original cinematic B&W look.",
-          "prompt_preview": "classic film noir cinematic style, high contrast black and white, deep impenetrable shadows, bright specular highlights, venetian blind shadows on face, cigarette smoke, rain on window, 1940s-50s hardboiled detective moo\u2026",
-          "thumbnail": {
-            "kind": "none",
-            "path": ""
-          },
-          "is_lut": false
-        },
-        {
           "slug": "neo-noir",
           "display": "Neo-Noir",
           "group": "cinematic_genre",
@@ -964,6 +1878,26 @@
           "best_for": "moody urban portraits, night rain, thriller",
           "notes": "Color evolution of classic noir.",
           "prompt_preview": "neo-noir cinematic, modern color noir, desaturated palette with pops of red or neon, rain soaked streets, reflections, trench coat, moody underlit face, high contrast, anamorphic lens flares, dark urban atmosphere, film \u2026",
+          "thumbnail": {
+            "kind": "none",
+            "path": ""
+          },
+          "is_lut": false
+        },
+        {
+          "slug": "film-noir",
+          "display": "Film Noir",
+          "group": "cinematic_genre",
+          "tags": [
+            "cinematic",
+            "bw",
+            "noir",
+            "dramatic",
+            "shadows"
+          ],
+          "best_for": "dramatic B&W portraits, mystery, shadows",
+          "notes": "The original cinematic B&W look.",
+          "prompt_preview": "classic film noir cinematic style, high contrast black and white, deep impenetrable shadows, bright specular highlights, venetian blind shadows on face, cigarette smoke, rain on window, 1940s-50s hardboiled detective moo\u2026",
           "thumbnail": {
             "kind": "none",
             "path": ""
@@ -1364,6 +2298,148 @@
   ],
   "lut_presets": [
     {
+      "slug": "teal-orange-blockbuster",
+      "display": "Teal Orange Blockbuster",
+      "group": "cinematic_pack",
+      "tags": [
+        "cinematic",
+        "teal-orange",
+        "hollywood",
+        "action"
+      ],
+      "best_for": "epic portraits, action, commercial cinematic",
+      "notes": "The most overused (but effective) modern cinematic grade.",
+      "prompt_preview": "modern Hollywood blockbuster cinematic LUT, classic teal and orange color grade, cool teal shadows, warm orange skin highlights, high contrast, crushed blacks, lifted shadows slightly, anamorphic lens characteristics, ep\u2026",
+      "thumbnail": {
+        "kind": "none",
+        "path": ""
+      },
+      "is_lut": true
+    },
+    {
+      "slug": "bleach-bypass-lut",
+      "display": "Bleach Bypass / Skip Bleach LUT",
+      "group": "cinematic_pack",
+      "tags": [
+        "lut",
+        "color-correction",
+        "contrast",
+        "desat",
+        "saving-private-ryan"
+      ],
+      "best_for": "gritty war, intense drama, high-contrast looks",
+      "notes": "Classic high-contrast desat film effect.",
+      "prompt_preview": "bleach bypass film process LUT (or digital emulation), desaturated colors with crushed blacks and lifted grainy highlights, high contrast, silvery sheen on skin and metals, used in Saving Private Ryan, 300, many war and \u2026",
+      "thumbnail": {
+        "kind": "none",
+        "path": ""
+      },
+      "is_lut": true
+    },
+    {
+      "slug": "teal-orange-hollywood-cc",
+      "display": "Teal Orange Hollywood Cc",
+      "group": "cinematic_pack",
+      "tags": [],
+      "best_for": "",
+      "notes": "",
+      "prompt_preview": "",
+      "thumbnail": {
+        "kind": "none",
+        "path": ""
+      },
+      "is_lut": true
+    },
+    {
+      "slug": "cross-process-e-6-to-c-41",
+      "display": "Cross Process E 6 To C 41",
+      "group": "cinematic_pack",
+      "tags": [],
+      "best_for": "",
+      "notes": "",
+      "prompt_preview": "",
+      "thumbnail": {
+        "kind": "none",
+        "path": ""
+      },
+      "is_lut": true
+    },
+    {
+      "slug": "day-for-night-lut",
+      "display": "Day For Night Lut",
+      "group": "cinematic_pack",
+      "tags": [],
+      "best_for": "",
+      "notes": "",
+      "prompt_preview": "",
+      "thumbnail": {
+        "kind": "none",
+        "path": ""
+      },
+      "is_lut": true
+    },
+    {
+      "slug": "kodak-vision3-500t",
+      "display": "Kodak Vision3 500T (Motion Picture)",
+      "group": "cinematic_pack",
+      "tags": [
+        "kodak",
+        "motion-picture",
+        "cinematic",
+        "lut",
+        "night",
+        "tungsten"
+      ],
+      "best_for": "cinematic video, night interiors, feature film look",
+      "notes": "The gold standard 500T negative for modern features.",
+      "prompt_preview": "shot on Kodak Vision3 500T 35mm motion picture negative film, tungsten balanced, rich blacks, beautiful skin under mixed lighting, fine grain structure when scanned, subtle halation, classic Hollywood night look, color c\u2026",
+      "thumbnail": {
+        "kind": "none",
+        "path": ""
+      },
+      "is_lut": true
+    },
+    {
+      "slug": "fuji-eterna-250d",
+      "display": "Fuji Eterna 250D (Motion Picture)",
+      "group": "cinematic_pack",
+      "tags": [
+        "fuji",
+        "motion-picture",
+        "cinematic",
+        "lut",
+        "daylight"
+      ],
+      "best_for": "day exterior cinematic, soft drama",
+      "notes": "Low-con filmic alternative to Vision3.",
+      "prompt_preview": "shot on Fuji Eterna 250D motion picture film, daylight balanced, low contrast cinematic with soft rolloff, excellent highlight handling, fine grain, used in many Asian and European features, natural color science with ge\u2026",
+      "thumbnail": {
+        "kind": "none",
+        "path": ""
+      },
+      "is_lut": true
+    },
+    {
+      "slug": "arri-alexa-logc-to-rec709",
+      "display": "ARRI Alexa LogC to Rec.709 (Digital Cinema LUT)",
+      "group": "cinematic_pack",
+      "tags": [
+        "arri",
+        "digital-cinema",
+        "lut",
+        "color-correction",
+        "logc"
+      ],
+      "best_for": "high-end digital cinema, commercials, prestige TV",
+      "notes": "The modern digital 'film' standard.",
+      "prompt_preview": "ARRI Alexa 35 or Mini LF LogC capture, color corrected with official ARRI LogC to Rec.709 LUT, natural yet cinematic dynamic range, beautiful highlight rolloff, subtle green/magenta bias in shadows controllable, used on \u2026",
+      "thumbnail": {
+        "kind": "none",
+        "path": ""
+      },
+      "is_lut": true
+    },
+    {
       "slug": "kodak-portra-400",
       "display": "Kodak Portra 400",
       "group": "film_emulation",
@@ -1642,67 +2718,6 @@
       "is_lut": true
     },
     {
-      "slug": "kodak-vision3-500t",
-      "display": "Kodak Vision3 500T (Motion Picture)",
-      "group": "film_emulation",
-      "tags": [
-        "kodak",
-        "motion-picture",
-        "cinematic",
-        "lut",
-        "night",
-        "tungsten"
-      ],
-      "best_for": "cinematic video, night interiors, feature film look",
-      "notes": "The gold standard 500T negative for modern features.",
-      "prompt_preview": "shot on Kodak Vision3 500T 35mm motion picture negative film, tungsten balanced, rich blacks, beautiful skin under mixed lighting, fine grain structure when scanned, subtle halation, classic Hollywood night look, color c\u2026",
-      "thumbnail": {
-        "kind": "none",
-        "path": ""
-      },
-      "is_lut": true
-    },
-    {
-      "slug": "fuji-eterna-250d",
-      "display": "Fuji Eterna 250D (Motion Picture)",
-      "group": "film_emulation",
-      "tags": [
-        "fuji",
-        "motion-picture",
-        "cinematic",
-        "lut",
-        "daylight"
-      ],
-      "best_for": "day exterior cinematic, soft drama",
-      "notes": "Low-con filmic alternative to Vision3.",
-      "prompt_preview": "shot on Fuji Eterna 250D motion picture film, daylight balanced, low contrast cinematic with soft rolloff, excellent highlight handling, fine grain, used in many Asian and European features, natural color science with ge\u2026",
-      "thumbnail": {
-        "kind": "none",
-        "path": ""
-      },
-      "is_lut": true
-    },
-    {
-      "slug": "arri-alexa-logc-to-rec709",
-      "display": "ARRI Alexa LogC to Rec.709 (Digital Cinema LUT)",
-      "group": "film_emulation",
-      "tags": [
-        "arri",
-        "digital-cinema",
-        "lut",
-        "color-correction",
-        "logc"
-      ],
-      "best_for": "high-end digital cinema, commercials, prestige TV",
-      "notes": "The modern digital 'film' standard.",
-      "prompt_preview": "ARRI Alexa 35 or Mini LF LogC capture, color corrected with official ARRI LogC to Rec.709 LUT, natural yet cinematic dynamic range, beautiful highlight rolloff, subtle green/magenta bias in shadows controllable, used on \u2026",
-      "thumbnail": {
-        "kind": "none",
-        "path": ""
-      },
-      "is_lut": true
-    },
-    {
       "slug": "heavy-35mm-film-grain-gate-weave",
       "display": "Heavy 35mm Film Grain + Gate Weave + Dirt",
       "group": "film_emulation",
@@ -1717,87 +2732,6 @@
       "best_for": "authentic film look, period, gritty realism",
       "notes": "Add on top of any stock LUT for real film feel.",
       "prompt_preview": "scanned 35mm film print with heavy organic grain (visible even in highlights), natural gate weave (subtle random frame shift), occasional light dirt specks and hair in gate, small scratches on print, film flicker in high\u2026",
-      "thumbnail": {
-        "kind": "none",
-        "path": ""
-      },
-      "is_lut": true
-    },
-    {
-      "slug": "teal-orange-blockbuster",
-      "display": "Teal Orange Blockbuster",
-      "group": "cinematic_genre",
-      "tags": [
-        "cinematic",
-        "teal-orange",
-        "hollywood",
-        "action"
-      ],
-      "best_for": "epic portraits, action, commercial cinematic",
-      "notes": "The most overused (but effective) modern cinematic grade.",
-      "prompt_preview": "modern Hollywood blockbuster cinematic LUT, classic teal and orange color grade, cool teal shadows, warm orange skin highlights, high contrast, crushed blacks, lifted shadows slightly, anamorphic lens characteristics, ep\u2026",
-      "thumbnail": {
-        "kind": "none",
-        "path": ""
-      },
-      "is_lut": true
-    },
-    {
-      "slug": "bleach-bypass-lut",
-      "display": "Bleach Bypass / Skip Bleach LUT",
-      "group": "cinematic_genre",
-      "tags": [
-        "lut",
-        "color-correction",
-        "contrast",
-        "desat",
-        "saving-private-ryan"
-      ],
-      "best_for": "gritty war, intense drama, high-contrast looks",
-      "notes": "Classic high-contrast desat film effect.",
-      "prompt_preview": "bleach bypass film process LUT (or digital emulation), desaturated colors with crushed blacks and lifted grainy highlights, high contrast, silvery sheen on skin and metals, used in Saving Private Ryan, 300, many war and \u2026",
-      "thumbnail": {
-        "kind": "none",
-        "path": ""
-      },
-      "is_lut": true
-    },
-    {
-      "slug": "teal-orange-hollywood-cc",
-      "display": "Teal Orange Hollywood Cc",
-      "group": "cinematic_genre",
-      "tags": [],
-      "best_for": "",
-      "notes": "",
-      "prompt_preview": "",
-      "thumbnail": {
-        "kind": "none",
-        "path": ""
-      },
-      "is_lut": true
-    },
-    {
-      "slug": "cross-process-e-6-to-c-41",
-      "display": "Cross Process E 6 To C 41",
-      "group": "cinematic_genre",
-      "tags": [],
-      "best_for": "",
-      "notes": "",
-      "prompt_preview": "",
-      "thumbnail": {
-        "kind": "none",
-        "path": ""
-      },
-      "is_lut": true
-    },
-    {
-      "slug": "day-for-night-lut",
-      "display": "Day For Night Lut",
-      "group": "cinematic_genre",
-      "tags": [],
-      "best_for": "",
-      "notes": "",
-      "prompt_preview": "",
       "thumbnail": {
         "kind": "none",
         "path": ""

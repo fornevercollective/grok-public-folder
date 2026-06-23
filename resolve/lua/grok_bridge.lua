@@ -1,6 +1,15 @@
-dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_resolve.lua")
+if not GROK_ROOT or GROK_ROOT == "" then
+    local env = os.getenv("GROK_PUBLIC_FOLDER") or ""
+    if env ~= "" then
+        dofile(env .. "/resolve/lua/grok_paths.lua")
+    else
+        local src = debug.getinfo(1, "S").source:gsub("^@", "")
+        dofile((src:match("(.*/)") or "") .. "grok_paths.lua")
+    end
+end
+dofile(GROK_ROOT .. "/resolve/lua/grok_resolve.lua")
 
-local BRIDGE = "/Users/tref/film/grok-public-folder/bridge"
+local BRIDGE = GROK_BRIDGE
 local REQUEST = BRIDGE .. "/request.json"
 local RESPONSE = BRIDGE .. "/response.json"
 
@@ -65,7 +74,7 @@ function grok_help()
     print("")
     print("start terminal bridge first")
     print("export XAI_API_KEY=your-key")
-    print("/Users/tref/film/grok-public-folder/bin/bridge")
+    print(GROK_BIN .. "/bridge")
 end
 
 function grok_send(action, text, options)
@@ -117,7 +126,7 @@ function grok_send(action, text, options)
     end
 
     print("bridge timeout")
-    print("start /Users/tref/film/grok-public-folder/bin/bridge in terminal")
+    print("start " .. GROK_BIN .. "/bridge in terminal")
     return nil
 end
 

@@ -67,6 +67,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private let presetPreview = NSTextField(wrappingLabelWithString: "")
 
     private let browserStatus = NSTextField(wrappingLabelWithString: "Safari handoff via browser/inbox.json and clipboard")
+    private let canvasBridgeStatus = NSTextField(wrappingLabelWithString: "Imagine + bridge — start bin/bridge for headless image/video")
     private var imdbController: ImdbTabController?
     private var streamController: StreamTabController?
     private var terminalController: TerminalTabController?
@@ -648,10 +649,30 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         panel.addSubview(outputGrid)
         let lutNotesLabel = UIHelpers.fieldLabel("LUT notes")
         let continuityLabel = UIHelpers.fieldLabel("Continuity")
+        let bridgeLabel = UIHelpers.fieldLabel("Imagine + bridge")
+        canvasBridgeStatus.font = GrokTypography.caption
+        canvasBridgeStatus.textColor = GrokTheme.textDim
+        canvasBridgeStatus.maximumNumberOfLines = 2
+        canvasBridgeStatus.translatesAutoresizingMaskIntoConstraints = false
+
+        let imagineOpenBtn = UIHelpers.flatButton("Open Imagine", accent: false, target: self, action: #selector(canvasOpenImagine))
+        let imaginePullBtn = UIHelpers.flatButton("Pull", accent: false, target: self, action: #selector(canvasPullImagine))
+        let imaginePushBtn = UIHelpers.flatButton("Push", accent: false, target: self, action: #selector(canvasPushImagine))
+        let bridgeImgBtn = UIHelpers.flatButton("Bridge Image", accent: false, target: self, action: #selector(canvasBridgeImage))
+        let bridgeVidBtn = UIHelpers.flatButton("Bridge Video", accent: true, target: self, action: #selector(canvasBridgeVideo))
+        let bridgePingBtn = UIHelpers.flatButton("Ping", accent: false, target: self, action: #selector(canvasBridgePing))
+        let bridgeRow = NSStackView(views: [imagineOpenBtn, imaginePullBtn, imaginePushBtn, bridgeImgBtn, bridgeVidBtn, bridgePingBtn])
+        bridgeRow.orientation = .horizontal
+        bridgeRow.spacing = 6
+        bridgeRow.translatesAutoresizingMaskIntoConstraints = false
+
         panel.addSubview(lutNotesLabel)
         panel.addSubview(promptAddField)
         panel.addSubview(continuityLabel)
         panel.addSubview(continuityField)
+        panel.addSubview(bridgeLabel)
+        panel.addSubview(bridgeRow)
+        panel.addSubview(canvasBridgeStatus)
 
         NSLayoutConstraint.activate([
             genreLabel.topAnchor.constraint(equalTo: panel.topAnchor, constant: 4),
@@ -685,9 +706,103 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             continuityField.topAnchor.constraint(equalTo: continuityLabel.bottomAnchor, constant: 4),
             continuityField.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             continuityField.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
-            continuityField.bottomAnchor.constraint(lessThanOrEqualTo: panel.bottomAnchor, constant: -8),
+            bridgeLabel.topAnchor.constraint(equalTo: continuityField.bottomAnchor, constant: 10),
+            bridgeLabel.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            bridgeRow.topAnchor.constraint(equalTo: bridgeLabel.bottomAnchor, constant: 4),
+            bridgeRow.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            canvasBridgeStatus.topAnchor.constraint(equalTo: bridgeRow.bottomAnchor, constant: 4),
+            canvasBridgeStatus.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            canvasBridgeStatus.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
+            canvasBridgeStatus.bottomAnchor.constraint(lessThanOrEqualTo: panel.bottomAnchor, constant: -8),
         ])
         return panel
+    }
+
+    private func currentCanvasGenerationOptions() -> (slug: String, prompt: String, duration: Int, resolution: String, aspect: String, lut: String, promptAdd: String) {
+        let slug = (presetPopup.selectedItem?.representedObject as? String) ?? (selectedPreset?.slug ?? catalog.defaults.slug)
+        let prompt = promptView.string.trimmingCharacters(in: .whitespacesAndNewlines)
+        let duration = (durationPopup.selectedItem?.representedObject as? Int) ?? catalog.defaults.durationSec
+        let resolution = resolutionPopup.titleOfSelectedItem ?? catalog.defaults.resolution
+        let aspect = aspectPopup.titleOfSelectedItem ?? catalog.defaults.aspectRatio
+        let lut = (lutPopup.selectedItem?.representedObject as? String) ?? ""
+        let promptAdd = promptAddField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (slug, prompt, duration, resolution, aspect, lut, promptAdd)
+    }
+
+    @objc private func canvasOpenImagine() {
+        let result = CanvasBridge.run(["open"])
+        canvasBridgeStatus.stringValue = result.ok ? "Opened grok.com/imagine in Safari" : "Failed: \(result.output)"
+    }
+
+    @objc private func canvasPullImagine() {
+        let result = CanvasBridge.run(["pull"])
+        let parsed = CanvasBridge.parse(result)
+        if let payload = parsed.payload, let prompt = payload.prompt, !prompt.isEmpty {
+            promptView.string = prompt
+            canvasBridgeStatus.stringValue = "Pulled prompt from Imagine"
+        } else {
+            canvasBridgeStatus.stringValue = parsed.error ?? result.output
+        }
+    }
+
+    @objc private func canvasPushImagine() {
+        let prompt = promptView.string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty else {
+            canvasBridgeStatus.stringValue = "Enter a prompt first"
+            return
+        }
+        let result = CanvasBridge.run(["push", prompt])
+        canvasBridgeStatus.stringValue = result.ok ? "Pushed prompt to Imagine + clipboard" : "Failed: \(result.output)"
+    }
+
+    @objc private func canvasBridgeImage() {
+        let opts = currentCanvasGenerationOptions()
+        guard !opts.prompt.isEmpty else {
+            canvasBridgeStatus.stringValue = "Enter a prompt first"
+            return
+        }
+        canvasBridgeStatus.stringValue = "Bridge image… (start bin/bridge if needed)"
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var args = ["image", "--prompt", opts.prompt, "--slug", opts.slug, "--aspect", opts.aspect]
+            if !opts.promptAdd.isEmpty { args += ["--prompt-add", opts.promptAdd] }
+            if !opts.lut.isEmpty { args += ["--lut", opts.lut] }
+            let result = CanvasBridge.run(args)
+            let parsed = CanvasBridge.parse(result)
+            DispatchQueue.main.async {
+                self?.canvasBridgeStatus.stringValue = parsed.payload?.message ?? parsed.error ?? result.output
+            }
+        }
+    }
+
+    @objc private func canvasBridgeVideo() {
+        let opts = currentCanvasGenerationOptions()
+        guard !opts.prompt.isEmpty else {
+            canvasBridgeStatus.stringValue = "Enter a prompt first"
+            return
+        }
+        canvasBridgeStatus.stringValue = "Bridge video… (start bin/bridge if needed)"
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var args = [
+                "video", "--prompt", opts.prompt, "--slug", opts.slug,
+                "--duration", String(opts.duration), "--resolution", opts.resolution, "--aspect", opts.aspect,
+            ]
+            if !opts.promptAdd.isEmpty { args += ["--prompt-add", opts.promptAdd] }
+            if !opts.lut.isEmpty { args += ["--lut", opts.lut] }
+            let result = CanvasBridge.run(args)
+            let parsed = CanvasBridge.parse(result)
+            DispatchQueue.main.async {
+                self?.canvasBridgeStatus.stringValue = parsed.payload?.message ?? parsed.error ?? result.output
+            }
+        }
+    }
+
+    @objc private func canvasBridgePing() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let message = CanvasBridge.ping()
+            DispatchQueue.main.async {
+                self?.canvasBridgeStatus.stringValue = message
+            }
+        }
     }
 
     private func populateGenerateControls() {

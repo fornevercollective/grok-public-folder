@@ -36,7 +36,7 @@ SCENES: dict[str, dict] = {
         "active": "Canvas",
         "panels": [
             ("left", 0.02, 0.16, 0.30, 0.78, "CANVAS VIEWER\nMedia | Preset\n[preview]\nCONTENT META\nFILE · grok_….mp4"),
-            ("center", 0.34, 0.16, 0.38, 0.78, "GENRE / PRESET\nPrompt editor\nDuration · Res · Aspect · LUT"),
+            ("center", 0.34, 0.16, 0.38, 0.78, "GENRE / PRESET\nPrompt · Imagine + bridge\nOpen · Pull · Push · Bridge Video"),
             ("right", 0.74, 0.16, 0.24, 0.78, "LUT VIEWER\n[poster]\nKodak Portra notes"),
         ],
         "footer": "Close · Generate Video",

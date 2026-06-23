@@ -1,4 +1,8 @@
-dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_paths.lua")
+GROK_ROOT = "__GROK_INSTALL_ROOT__"
+if GROK_ROOT:sub(1, 2) == "__" then
+    GROK_ROOT = os.getenv("GROK_PUBLIC_FOLDER") or ""
+end
+dofile(GROK_ROOT .. "/resolve/lua/grok_paths.lua")
 dofile(GROK_ROOT .. "/resolve/lua/grok_startup.lua")
 
 local TERMINAL_LAUNCHER = GROK_BIN .. "/grok-terminal"

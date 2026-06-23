@@ -6,7 +6,7 @@ SCRIPTS="$HOME/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fus
 UTIL_DEST="$SCRIPTS/Utility"
 
 # Resolve Free (19.1+) removed Python UIManager — use Grok.lua for the menu.
-# Utility scripts appear under Scripts on each page; one Grok.lua entry.
+# One-click install: patches Grok.lua with your clone path, warms preset pack, builds UI.
 
 GROK_NAMES=(
   "Grok.lua"
@@ -31,12 +31,30 @@ for dir in Utility Comp Tool Edit Color Deliver Fairlight; do
 done
 
 mkdir -p "$UTIL_DEST"
-cp "$ROOT/resolve/utility/Grok.lua" "$UTIL_DEST/"
+
+# Portable root marker (lua + bins read this when GROK_PUBLIC_FOLDER unset)
+mkdir -p "$ROOT/project"
+printf '%s\n' "$ROOT" > "$ROOT/project/.grok-root"
+
+# Patch Grok.lua with this machine's clone path
+if [[ ! -f "$ROOT/resolve/utility/Grok.lua" ]]; then
+  echo "missing $ROOT/resolve/utility/Grok.lua" >&2
+  exit 1
+fi
+sed "s|__GROK_INSTALL_ROOT__|${ROOT//|/\\|}|g" "$ROOT/resolve/utility/Grok.lua" > "$UTIL_DEST/Grok.lua"
 xattr -cr "$UTIL_DEST/Grok.lua" 2>/dev/null || true
 
-if [[ -f "$ROOT/grok_generate_catalog.py" ]]; then
+chmod +x "$ROOT"/bin/* 2>/dev/null || true
+chmod +x "$ROOT"/install-resolve.sh 2>/dev/null || true
+
+export GROK_PUBLIC_FOLDER="$ROOT"
+
+if [[ -f "$ROOT/grok_preset_pack.py" ]]; then
+  python3 "$ROOT/grok_preset_pack.py" --warm --rebuild 2>/dev/null || true
+elif [[ -f "$ROOT/grok_generate_catalog.py" ]]; then
   python3 "$ROOT/grok_generate_catalog.py" >/dev/null 2>&1 || true
 fi
+
 if compgen -G "$ROOT/resolve/ui/*.swift" >/dev/null; then
   PLIST="$ROOT/resolve/ui/Info.plist"
   if [[ -f "$PLIST" ]]; then
@@ -47,7 +65,16 @@ if compgen -G "$ROOT/resolve/ui/*.swift" >/dev/null; then
   fi
 fi
 
-echo "installed $UTIL_DEST/Grok.lua"
-echo "Workspace -> Scripts -> Grok  (Grok for Resolve)"
-echo "UI panels and Terminal tabs are labeled Grok for Resolve"
-echo "Resolve Free: Lua menu (Python UI not supported since 19.1)"
+cat <<EOF
+
+✓ Grok for Resolve installed (portable)
+
+  Script:  $UTIL_DEST/Grok.lua
+  Root:    $ROOT
+  Open:    Workspace → Scripts → Grok
+
+  API keys: cp project/grok-secrets.example.env project/grok-secrets.env
+  Presets:  ./bin/preset-pack --list   (50 cinematic slugs)
+  Bridge:   ./bin/bridge               (Canvas bridge image/video)
+
+EOF

@@ -10,7 +10,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from grok_paths import PRESET_CACHE_DIR, PRESETS_MANIFEST, ROOT, STARTUP_CONFIG
+from grok_paths import CINEMATIC_PACK, PRESET_CACHE_DIR, PRESETS_MANIFEST, ROOT, STARTUP_CONFIG
 from grok_presets import all_slugs, fetch_preset_prompt, imagine_root, load_manifest, slug_group
 from grok_startup import load_startup_config
 
@@ -127,16 +127,41 @@ def build_preset(slug: str, group_id: str) -> dict:
     }
 
 
+def _load_cinematic_pack() -> list[str]:
+    if not CINEMATIC_PACK.exists():
+        return []
+    try:
+        data = json.loads(CINEMATIC_PACK.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    return [str(s).strip() for s in data.get("slugs") or [] if str(s).strip()]
+
+
 def build_catalog() -> dict:
     manifest = load_manifest()
     config = load_startup_config()
     gen = config.get("generation", {})
     featured = manifest.get("featured_templates", [])
     groups_cfg = manifest.get("groups", {})
+    pack_slugs = _load_cinematic_pack()
 
     groups: list[dict] = []
     lut_presets: list[dict] = []
     seen_lut: set[str] = set()
+
+    if pack_slugs:
+        pack_presets = [build_preset(slug, "cinematic_pack") for slug in pack_slugs]
+        groups.append(
+            {
+                "id": "cinematic_pack",
+                "label": "Cinematic Pack (50)",
+                "presets": pack_presets,
+            }
+        )
+        for preset in pack_presets:
+            if preset["is_lut"] and preset["slug"] not in seen_lut:
+                lut_presets.append(preset)
+                seen_lut.add(preset["slug"])
 
     if featured:
         presets = [build_preset(slug, "featured") for slug in featured]
@@ -160,8 +185,12 @@ def build_catalog() -> dict:
                 lut_presets.append(preset)
                 seen_lut.add(preset["slug"])
 
+    default_slug = (config.get("featured_slugs") or ["neo-noir"])[0]
+    if pack_slugs and default_slug not in pack_slugs:
+        default_slug = pack_slugs[0]
+
     defaults = {
-        "slug": (config.get("featured_slugs") or ["neo-noir"])[0],
+        "slug": default_slug,
         "prompt": "woman in rain on empty street at night",
         "duration_sec": int(gen.get("duration_sec", 10)),
         "resolution": gen.get("resolution", "720p"),
@@ -174,6 +203,7 @@ def build_catalog() -> dict:
     return {
         "version": 1,
         "preset_count": len(all_slugs()),
+        "cinematic_pack_count": len(pack_slugs),
         "defaults": defaults,
         "groups": groups,
         "lut_presets": lut_presets,

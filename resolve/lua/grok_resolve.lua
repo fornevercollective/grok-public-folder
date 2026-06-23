@@ -1,5 +1,10 @@
-if not GROK_ROOT then
-    dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_paths.lua")
+if not GROK_ROOT or GROK_ROOT == "" then
+    local env = os.getenv("GROK_PUBLIC_FOLDER") or ""
+    if env ~= "" then
+        dofile(env .. "/resolve/lua/grok_paths.lua")
+    else
+        dofile((debug.getinfo(1, "S").source:gsub("^@", ""):match("(.*/)") or "") .. "grok_paths.lua")
+    end
 end
 local ARTIFACTS = GROK_ROOT
 local MEDIA_EXT = {

@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export GROK_PUBLIC_FOLDER="$ROOT"
+SECRETS="$ROOT/project/grok-secrets.env"
+if [[ -f "$SECRETS" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$SECRETS"
+  set +a
+fi
+exec python3 "$ROOT/grok_canvas_bridge.py" "$@"

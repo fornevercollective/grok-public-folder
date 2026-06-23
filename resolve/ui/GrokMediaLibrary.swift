@@ -194,6 +194,59 @@ enum MediaLibrary {
     }
 }
 
+struct CanvasBridgeResponse: Codable {
+    let ok: Bool?
+    let error: String?
+    let message: String?
+    let prompt: String?
+}
+
+enum CanvasBridge {
+    static var binURL: URL { GrokPaths.root.appendingPathComponent("bin/canvas-bridge") }
+
+    static func run(_ args: [String]) -> (ok: Bool, output: String) {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/bash")
+        task.arguments = [binURL.path] + args
+        task.environment = ProcessInfo.processInfo.environment.merging(
+            ["GROK_PUBLIC_FOLDER": GrokPaths.root.path],
+            uniquingKeysWith: { _, new in new }
+        )
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = pipe
+        do {
+            try task.run()
+            task.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let text = String(data: data, encoding: .utf8) ?? ""
+            return (task.terminationStatus == 0, text.trimmingCharacters(in: .whitespacesAndNewlines))
+        } catch {
+            return (false, error.localizedDescription)
+        }
+    }
+
+    static func parse(_ result: (ok: Bool, output: String)) -> (payload: CanvasBridgeResponse?, error: String?) {
+        guard let data = result.output.data(using: .utf8),
+              let payload = try? JSONDecoder().decode(CanvasBridgeResponse.self, from: data) else {
+            return (nil, result.output.isEmpty ? "Canvas bridge failed" : result.output)
+        }
+        if payload.ok == false {
+            return (nil, payload.error ?? payload.message ?? "Canvas bridge failed")
+        }
+        return (payload, nil)
+    }
+
+    static func ping() -> String {
+        let result = run(["ping"])
+        if let data = result.output.data(using: .utf8),
+           let payload = try? JSONDecoder().decode(CanvasBridgeResponse.self, from: data) {
+            return payload.message ?? (payload.ok == true ? "bridge online" : "bridge offline")
+        }
+        return result.ok ? result.output : "bridge offline — run bin/bridge"
+    }
+}
+
 enum BrowserBridge {
     static var binURL: URL { GrokPaths.root.appendingPathComponent("bin/browser") }
 
