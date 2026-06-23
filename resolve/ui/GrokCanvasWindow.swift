@@ -10,6 +10,7 @@ enum GrokTabs {
         ("bootstrap", "Bootstrap"),
         ("bridge", "Bridge"),
         ("terminal", "Terminal"),
+        ("timeline", "Timeline"),
         ("browser", "Browser"),
         ("imdb", "IMDb"),
         ("stream", "Stream"),
@@ -66,17 +67,18 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private var imdbController: ImdbTabController?
     private var streamController: StreamTabController?
     private var terminalController: TerminalTabController?
+    private var timelineController: TimelineTabController?
 
     init(catalog: GenerateCatalog) {
         self.catalog = catalog
         super.init()
     }
 
-    func show() {
+    func show(initialTab: String = "canvas") {
         let window = makeWindow()
         self.window = window
         window.delegate = self
-        switchTab("canvas")
+        switchTab(initialTab)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -193,6 +195,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         case "bootstrap": panel = buildSimpleTab(title: "Bootstrap", body: "Create 4K bins, timeline settings, and grok_generated import target in the open Resolve project.", action: "Run Bootstrap", tabId: "bootstrap")
         case "bridge": panel = buildSimpleTab(title: "Bridge", body: "Open Terminal bridge for chat and headless generate requests from Resolve.", action: "Start Bridge", tabId: "bridge")
         case "terminal": panel = buildTerminalTab()
+        case "timeline": panel = buildTimelineTab()
         case "browser": panel = buildBrowserTab()
         case "imdb": panel = buildImdbTab()
         case "stream": panel = buildStreamTab()
@@ -391,6 +394,21 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         task.executableURL = URL(fileURLWithPath: "/bin/bash")
         task.arguments = [launcher.path, grok.path, "Grok Console"]
         try? task.run()
+    }
+
+    private func buildTimelineTab() -> NSView {
+        let controller = TimelineTabController()
+        controller.promptView = promptView
+        controller.onScanTimeline = { [weak self] in
+            self?.complete("ACTION:Scan Timeline")
+            self?.window?.close()
+        }
+        controller.onBatchRegenerate = { [weak self] in
+            self?.complete("ACTION:Batch Regenerate Timeline")
+            self?.window?.close()
+        }
+        timelineController = controller
+        return controller.buildView()
     }
 
     @objc private func scanImportPressed() {

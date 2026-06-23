@@ -1,0 +1,199 @@
+if not GROK_ROOT then
+    dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_paths.lua")
+end
+dofile(GROK_ROOT .. "/resolve/lua/grok_resolve.lua")
+
+local SCAN_FILE = GROK_PROJECT .. "/timeline-grok-clips.json"
+local MEDIA_EXT = {
+    [".mp4"] = true, [".mov"] = true, [".m4v"] = true, [".webm"] = true,
+    [".png"] = true, [".jpg"] = true, [".jpeg"] = true, [".webp"] = true, [".gif"] = true,
+}
+
+local function json_escape(value)
+    if value == nil then
+        return "null"
+    end
+    if type(value) == "number" then
+        return tostring(value)
+    end
+    if type(value) == "boolean" then
+        return value and "true" or "false"
+    end
+    local text = tostring(value)
+    text = text:gsub("\\", "\\\\")
+    text = text:gsub('"', '\\"')
+    text = text:gsub("\n", "\\n")
+    text = text:gsub("\r", "\\r")
+    return '"' .. text .. '"'
+end
+
+local function read_sidecar_json(media_path)
+    if not media_path or media_path == "" then
+        return nil
+    end
+    local sidecar = media_path .. ".grok.json"
+    local file = io.open(sidecar, "r")
+    if not file then
+        return nil
+    end
+    local content = file:read("*a")
+    file:close()
+    if content and content ~= "" then
+        return content
+    end
+    return nil
+end
+
+local function is_grok_media(file_path, file_name)
+    if not file_path and not file_name then
+        return false
+    end
+    local path = file_path or ""
+    local name = (file_name or path:match("([^/]+)$") or ""):lower()
+    if path:find(GROK_ROOT, 1, true) then
+        return true
+    end
+    if name:sub(1, 5) == "grok_" then
+        return true
+    end
+    if read_sidecar_json(file_path) then
+        return true
+    end
+    return false
+end
+
+local function clip_property(media_item, key)
+    if not media_item or not media_item.GetClipProperty then
+        return ""
+    end
+    local ok, value = pcall(function() return media_item:GetClipProperty(key) end)
+    if ok and value and value ~= "" then
+        return tostring(value)
+    end
+    return ""
+end
+
+local function frames_to_timecode(frames, fps)
+    if not fps or fps <= 0 then
+        fps = 24
+    end
+    local total_seconds = math.floor(frames / fps)
+    local f = math.floor(frames % fps)
+    local s = total_seconds % 60
+    local m = math.floor(total_seconds / 60) % 60
+    local h = math.floor(total_seconds / 3600)
+    return string.format("%02d:%02d:%02d:%02d", h, m, s, f)
+end
+
+function grok_scan_timeline()
+    local resolve = grok_get_resolve()
+    if not resolve then
+        print("resolve not connected")
+        return 0
+    end
+
+    local project = resolve:GetProjectManager():GetCurrentProject()
+    if not project then
+        print("open a project first")
+        return 0
+    end
+
+    local timeline = project:GetCurrentTimeline()
+    if not timeline then
+        print("open a timeline first")
+        return 0
+    end
+
+    local fps_text = project:GetSetting("timelineFrameRate") or "24"
+    local fps = tonumber(fps_text) or 24
+    local timeline_name = timeline:GetName() or "Timeline"
+    local project_name = project:GetName() or "Project"
+    local clips = {}
+    local track_count = timeline:GetTrackCount("video") or 0
+
+    for track_index = 1, track_count do
+        local items = timeline:GetItemListInTrack("video", track_index)
+        if items then
+            for item_index, item in ipairs(items) do
+                local media_item = item:GetMediaPoolItem()
+                if media_item then
+                    local file_path = clip_property(media_item, "File Path")
+                    local file_name = clip_property(media_item, "File Name")
+                    if file_name == "" then
+                        file_name = media_item:GetName() or ""
+                    end
+                    if is_grok_media(file_path, file_name) then
+                        local start_frame = item:GetStart() or 0
+                        local end_frame = item:GetEnd() or 0
+                        local duration = end_frame - start_frame
+                        if duration < 0 then
+                            duration = 0
+                        end
+                        local sidecar_raw = read_sidecar_json(file_path)
+                        table.insert(clips, {
+                            id = "v" .. track_index .. "_" .. item_index,
+                            track = track_index,
+                            track_type = "video",
+                            name = file_name,
+                            file_path = file_path,
+                            start_frame = start_frame,
+                            end_frame = end_frame,
+                            duration_frames = duration,
+                            timeline_in = frames_to_timecode(start_frame, fps),
+                            timeline_out = frames_to_timecode(end_frame, fps),
+                            sidecar_raw = sidecar_raw,
+                        })
+                    end
+                end
+            end
+        end
+    end
+
+    local stamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    local file = io.open(SCAN_FILE, "w")
+    if not file then
+        print("could not write " .. SCAN_FILE)
+        return 0
+    end
+
+    file:write("{\n")
+    file:write('  "scanned_at": ' .. json_escape(stamp) .. ",\n")
+    file:write('  "project_name": ' .. json_escape(project_name) .. ",\n")
+    file:write('  "timeline_name": ' .. json_escape(timeline_name) .. ",\n")
+    file:write('  "fps": ' .. json_escape(fps) .. ",\n")
+    file:write('  "clip_count": ' .. #clips .. ",\n")
+    file:write('  "clips": [\n')
+
+    for index, clip in ipairs(clips) do
+        file:write("    {\n")
+        file:write('      "id": ' .. json_escape(clip.id) .. ",\n")
+        file:write('      "track": ' .. clip.track .. ",\n")
+        file:write('      "track_type": ' .. json_escape(clip.track_type) .. ",\n")
+        file:write('      "name": ' .. json_escape(clip.name) .. ",\n")
+        file:write('      "file_path": ' .. json_escape(clip.file_path) .. ",\n")
+        file:write('      "start_frame": ' .. clip.start_frame .. ",\n")
+        file:write('      "end_frame": ' .. clip.end_frame .. ",\n")
+        file:write('      "duration_frames": ' .. clip.duration_frames .. ",\n")
+        file:write('      "timeline_in": ' .. json_escape(clip.timeline_in) .. ",\n")
+        file:write('      "timeline_out": ' .. json_escape(clip.timeline_out) .. ",\n")
+        if clip.sidecar_raw then
+            file:write('      "sidecar": ' .. clip.sidecar_raw .. ",\n")
+        else
+            file:write('      "sidecar": null,\n')
+        end
+        file:write('      "is_grok": true\n')
+        file:write("    }")
+        if index < #clips then
+            file:write(",\n")
+        else
+            file:write("\n")
+        end
+    end
+
+    file:write("  ]\n}\n")
+    file:close()
+
+    print("timeline scan: " .. #clips .. " grok clip(s) on " .. timeline_name)
+    print("wrote " .. SCAN_FILE)
+    return #clips
+end

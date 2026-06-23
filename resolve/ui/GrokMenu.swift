@@ -34,7 +34,8 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         switch mode {
         case "choose":
             ensureCatalog()
-            showCanvas()
+            let initialTab = CommandLine.arguments.dropFirst(2).first ?? "canvas"
+            showCanvas(initialTab: initialTab)
         case "prompt":
             promptTitle = args.dropFirst().first ?? "Grok"
             promptDefault = args.dropFirst().dropFirst().joined(separator: " ")
@@ -104,7 +105,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         return button
     }
 
-    private func showCanvas() {
+    private func showCanvas(initialTab: String = "canvas") {
         let catalog = CatalogStore.load()
         let controller = CanvasWindowController(catalog: catalog)
         canvasController = controller
@@ -112,7 +113,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
             self?.resultLine = output
             self?.finish()
         }
-        controller.show()
+        controller.show(initialTab: initialTab)
     }
 
     private func showPrompt() {

@@ -175,19 +175,34 @@ local function dispatch(choice)
     end
 end
 
-local output = run_menu_ui("choose")
-if not output then
-    print("grok menu cancelled")
-    return
+local function handle_menu_output(output)
+    if not output or output == "" or output == "CANCELLED" then
+        print("grok menu cancelled")
+        return
+    end
+
+    local action, opts = parse_menu_output(output)
+    if action == "Generate Video" and opts.SLUG and opts.PROMPT then
+        print("grok: Generate Video")
+        action_generate(opts)
+    elseif action == "Scan Timeline" then
+        dofile(GROK_ROOT .. "/resolve/lua/grok_timeline.lua")
+        local count = grok_scan_timeline()
+        notify("Timeline scan: " .. tostring(count) .. " Grok clip(s)")
+        handle_menu_output(run_menu_ui("choose", "timeline"))
+    elseif action == "Batch Regenerate Timeline" then
+        alert("Opening Terminal", trust_terminal_message(
+            "Batch Regenerate Timeline",
+            "Terminal tab title: Grok · Batch Regenerate\nRuns: bin/timeline batch-run for queued clips"
+        ))
+        open_terminal(GROK_BIN .. "/timeline batch-run", "Batch Regenerate")
+        notify("Batch regenerate queued — check Terminal")
+    elseif action then
+        print("grok: " .. action)
+        dispatch(action)
+    else
+        print("grok menu cancelled")
+    end
 end
 
-local action, opts = parse_menu_output(output)
-if action == "Generate Video" and opts.SLUG and opts.PROMPT then
-    print("grok: Generate Video")
-    action_generate(opts)
-elseif action then
-    print("grok: " .. action)
-    dispatch(action)
-else
-    print("grok menu cancelled")
-end
+handle_menu_output(run_menu_ui("choose"))
