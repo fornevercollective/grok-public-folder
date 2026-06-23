@@ -65,6 +65,8 @@ struct MovieDetail: Codable {
 }
 
 struct MovieSearchResponse: Codable {
+    let ok: Bool?
+    let error: String?
     let results: [MovieSummary]
 }
 
@@ -105,18 +107,26 @@ enum MovieBridge {
         return try? JSONDecoder().decode(MovieStatusResponse.self, from: data)
     }
 
-    static func search(title: String) -> [MovieSummary] {
-        let result = run(["search", title])
-        guard result.ok, let data = result.output.data(using: .utf8),
-              let payload = try? JSONDecoder().decode(MovieSearchResponse.self, from: data) else { return [] }
-        return payload.results
+    static func search(title: String) -> (results: [MovieSummary], error: String?) {
+        parseSearch(run(["search", title]))
     }
 
-    static func feel(_ mood: String) -> [MovieSummary] {
-        let result = run(["feel", mood])
-        guard result.ok, let data = result.output.data(using: .utf8),
-              let payload = try? JSONDecoder().decode(MovieSearchResponse.self, from: data) else { return [] }
-        return payload.results
+    static func feel(_ mood: String) -> (results: [MovieSummary], error: String?) {
+        parseSearch(run(["feel", mood]))
+    }
+
+    private static func parseSearch(_ result: (ok: Bool, output: String)) -> (results: [MovieSummary], error: String?) {
+        guard let data = result.output.data(using: .utf8),
+              let payload = try? JSONDecoder().decode(MovieSearchResponse.self, from: data) else {
+            return ([], result.output.isEmpty ? "IMDb search failed" : result.output)
+        }
+        if payload.ok == false {
+            return ([], payload.error ?? "IMDb search failed")
+        }
+        if !result.ok, let err = payload.error {
+            return ([], err)
+        }
+        return (payload.results, nil)
     }
 
     static func detail(_ id: Int) -> MovieDetail? {

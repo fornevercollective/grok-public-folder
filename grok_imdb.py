@@ -12,7 +12,10 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from grok_paths import IMDB_DIR, ROOT
+from grok_paths import IMDB_DIR, PROJECT_DIR, ROOT
+from grok_secrets import load_secrets
+
+load_secrets()
 
 TMDB_BASE = "https://api.themoviedb.org/3"
 TMDB_IMAGE = "https://image.tmdb.org/t/p/w500"
@@ -46,6 +49,7 @@ FEEL_GENRES = {
 
 
 def _api_key() -> str:
+    load_secrets()
     return os.environ.get("TMDB_API_KEY", "").strip()
 
 
@@ -304,10 +308,14 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 json.dumps(
                     {
+                        "ok": True,
                         "root": str(ROOT),
                         "imdb_dir": str(IMDB_DIR),
                         "tmdb_configured": bool(_api_key()),
                         "xai_configured": bool(_xai_key()),
+                        "secrets_file": str(PROJECT_DIR / "grok-secrets.env"),
+                        "secrets_exists": (PROJECT_DIR / "grok-secrets.env").exists(),
+                        "setup_hint": "cp project/grok-secrets.example.env project/grok-secrets.env",
                     },
                     indent=2,
                 )
@@ -317,27 +325,38 @@ def main(argv: list[str] | None = None) -> int:
             query = " ".join(args[1:])
             if not query:
                 raise RuntimeError("search requires a title")
-            print(json.dumps({"results": search_movies(query)}, indent=2))
+            print(json.dumps({"ok": True, "results": search_movies(query)}, indent=2))
             return 0
         if cmd == "feel":
             feel = " ".join(args[1:])
             if not feel:
                 raise RuntimeError("feel requires a mood description")
-            print(json.dumps({"results": feel_movies(feel)}, indent=2))
+            print(json.dumps({"ok": True, "results": feel_movies(feel)}, indent=2))
             return 0
         if cmd == "detail":
             tmdb_id = int(args[1])
-            print(json.dumps(movie_detail(tmdb_id), indent=2))
+            payload = movie_detail(tmdb_id)
+            payload["ok"] = True
+            print(json.dumps(payload, indent=2))
             return 0
         if cmd == "similar-prompt":
             tmdb_id = int(args[1])
             print(add_similar_to_prompt(tmdb_id))
             return 0
+        if cmd == "open-setup":
+            example = PROJECT_DIR / "grok-secrets.example.env"
+            target = PROJECT_DIR / "grok-secrets.env"
+            if not target.exists() and example.exists():
+                target.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
+            subprocess = __import__("subprocess")
+            subprocess.run(["open", str(PROJECT_DIR)], check=False)
+            print(json.dumps({"ok": True, "message": f"opened {PROJECT_DIR}"}))
+            return 0
     except (RuntimeError, ValueError, IndexError) as exc:
-        print(json.dumps({"ok": False, "error": str(exc)}), file=sys.stderr)
+        print(json.dumps({"ok": False, "error": str(exc), "results": []}))
         return 1
 
-    print(json.dumps({"ok": False, "error": f"unknown command: {cmd}"}), file=sys.stderr)
+    print(json.dumps({"ok": False, "error": f"unknown command: {cmd}", "results": []}))
     return 1
 
 

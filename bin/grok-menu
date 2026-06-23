@@ -6,6 +6,13 @@ UI_DIR="$ROOT/resolve/ui"
 BIN="$ROOT/bin/grok-menu-ui"
 PLIST="$ROOT/resolve/ui/Info.plist"
 export GROK_PUBLIC_FOLDER="$ROOT"
+SECRETS="$ROOT/project/grok-secrets.env"
+if [[ -f "$SECRETS" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$SECRETS"
+  set +a
+fi
 
 if [[ ! -f "$UI_DIR/GrokMenu.swift" ]]; then
   echo "missing $UI_DIR/GrokMenu.swift" >&2

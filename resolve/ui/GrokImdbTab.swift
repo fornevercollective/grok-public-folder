@@ -38,7 +38,8 @@ final class ImdbTabController: NSObject {
 
         let searchBtn = UIHelpers.flatButton("Search Title", accent: true, target: self, action: #selector(searchPressed))
         let feelBtn = UIHelpers.flatButton("Search Feel", accent: false, target: self, action: #selector(feelPressed))
-        let searchRow = NSStackView(views: [searchBtn, feelBtn])
+        let setupBtn = UIHelpers.flatButton("Setup Keys", accent: false, target: self, action: #selector(setupPressed))
+        let searchRow = NSStackView(views: [searchBtn, feelBtn, setupBtn])
         searchRow.orientation = .horizontal
         searchRow.spacing = 8
         searchRow.translatesAutoresizingMaskIntoConstraints = false
@@ -142,23 +143,37 @@ final class ImdbTabController: NSObject {
 
     private func refreshStatus() {
         if let status = MovieBridge.status() {
-            let tmdb = status.tmdbConfigured ? "TMDB ✓" : "TMDB ✗ (set TMDB_API_KEY)"
+            let tmdb = status.tmdbConfigured ? "TMDB ✓" : "TMDB ✗ — copy project/grok-secrets.example.env → grok-secrets.env"
             let xai = status.xaiConfigured ? "xAI ✓" : "xAI optional for feel/trivia"
             statusLabel.stringValue = "\(tmdb) · \(xai)"
         }
     }
 
+    @objc private func setupPressed() {
+        _ = MovieBridge.run(["open-setup"])
+        refreshStatus()
+        statusLabel.stringValue = "Opened project/ — edit grok-secrets.env and set TMDB_API_KEY"
+    }
+
     @objc private func searchPressed() {
         let q = titleField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty else { return }
-        results = MovieBridge.search(title: q)
+        let response = MovieBridge.search(title: q)
+        results = response.results
+        if let error = response.error {
+            statusLabel.stringValue = error
+        }
         reloadResults()
     }
 
     @objc private func feelPressed() {
         let q = feelField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty else { return }
-        results = MovieBridge.feel(q)
+        let response = MovieBridge.feel(q)
+        results = response.results
+        if let error = response.error {
+            statusLabel.stringValue = error
+        }
         reloadResults()
     }
 

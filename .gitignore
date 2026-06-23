@@ -13,8 +13,10 @@ streaming/state.json
 streaming/overlay.json
 streaming/overlay.html
 streaming/rtmp.template.json
+project/grok-secrets.env
 project/timeline-grok-clips.json
 project/timeline-batch-save.json
 bridge/timeline-batch.json
 bin/grok-menu-ui
+.venv-docs/
 .DS_Store

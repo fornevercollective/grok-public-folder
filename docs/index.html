@@ -3,20 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Grok + DaVinci Resolve</title>
+  <title>Grok for Resolve</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #0d1117;
-      --surface: #161b22;
-      --border: #30363d;
-      --text: #e6edf3;
-      --muted: #8b949e;
-      --accent: #58a6ff;
-      --green: #3fb950;
-      --yellow: #d29922;
-      --code-bg: #1f2428;
-      --max: 760px;
+      --bg: #1b1d20;
+      --surface: #252729;
+      --panel: #25272b;
+      --border: #4a4d53;
+      --text: #e8eaed;
+      --muted: #c0c3c8;
+      --dim: #aeb2b8;
+      --accent: #f98b14;
+      --green: #5cb85c;
+      --yellow: #e6b422;
+      --code-bg: #15171a;
+      --max: 920px;
     }
     * { box-sizing: border-box; }
     body {
@@ -27,26 +30,27 @@
     }
     header {
       border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, #111827 0%, var(--bg) 100%);
-      padding: 3rem 1.5rem 2rem;
+      background: linear-gradient(180deg, #17191c 0%, var(--bg) 100%);
+      padding: 2.5rem 1.5rem 2rem;
+      border-left: 4px solid var(--accent);
     }
     .wrap { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
-    h1 { margin: 0 0 0.5rem; font-size: 2rem; letter-spacing: -0.02em; }
-    .lead { color: var(--muted); margin: 0; font-size: 1.05rem; }
+    h1 { margin: 0 0 0.35rem; font-size: 1.85rem; letter-spacing: 0.04em; text-transform: uppercase; }
+    .lead { color: var(--muted); margin: 0; font-size: 1.02rem; }
     main { padding: 2rem 0 4rem; }
     h2 {
       margin: 2.5rem 0 0.75rem;
-      font-size: 1.35rem;
+      font-size: 1.3rem;
       padding-top: 0.5rem;
       border-top: 1px solid var(--border);
     }
     h2:first-of-type { border-top: 0; margin-top: 0; }
     h3 { margin: 1.5rem 0 0.5rem; font-size: 1.05rem; color: var(--accent); }
-    p, li { color: #c9d1d9; }
+    p, li { color: var(--muted); }
     a { color: var(--accent); }
     code, pre {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.9em;
+      font-size: 0.88em;
     }
     code {
       background: var(--code-bg);
@@ -72,20 +76,19 @@
     }
     .toc ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
     .note {
-      background: #1c2128;
+      background: var(--panel);
       border-left: 3px solid var(--yellow);
       padding: 0.75rem 1rem;
       border-radius: 0 6px 6px 0;
       margin: 1rem 0;
     }
-    .ok {
-      border-left-color: var(--green);
-    }
+    .ok { border-left-color: var(--green); }
+    .warn { border-left-color: var(--accent); }
     table {
       width: 100%;
       border-collapse: collapse;
       margin: 1rem 0;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
     }
     th, td {
       border: 1px solid var(--border);
@@ -93,21 +96,55 @@
       text-align: left;
       vertical-align: top;
     }
-    th { background: var(--surface); }
+    th { background: var(--surface); color: var(--text); }
+    .tab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin: 1.25rem 0 2rem;
+    }
+    .tab-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .tab-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-card figcaption {
+      padding: 0.65rem 0.85rem;
+      font-size: 0.9rem;
+      color: var(--dim);
+    }
+    .tab-card strong { color: var(--text); }
+    .chart-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin: 1rem 0 1.5rem;
+      overflow-x: auto;
+    }
+    .mermaid { background: transparent !important; }
     footer {
       border-top: 1px solid var(--border);
-      color: var(--muted);
+      color: var(--dim);
       padding: 2rem 1.5rem;
       font-size: 0.9rem;
     }
+    .phase { color: var(--accent); font-weight: 600; }
   </style>
 </head>
 <body>
   <header>
     <div class="wrap">
-      <h1>Grok + DaVinci Resolve</h1>
+      <h1>Grok for Resolve</h1>
       <p class="lead">
-        Use Grok Imagine media in Resolve Free via a public folder, in-app panel, and terminal bridge.
+        Imagine canvas → Resolve 4K edit. Swift UI panel, terminal bridge, timeline batch tools.
         Repo: <a href="https://github.com/fornevercollective/grok-public-folder">fornevercollective/grok-public-folder</a>
       </p>
     </div>
@@ -117,233 +154,315 @@
     <nav class="toc">
       <strong>On this page</strong>
       <ul>
-        <li><a href="#what">What this is</a></li>
-        <li><a href="#requirements">Requirements</a></li>
+        <li><a href="#optimize">Workflow optimization chart</a></li>
+        <li><a href="#tabs">UI tab snapshots</a></li>
         <li><a href="#install">Install</a></li>
-        <li><a href="#panel">Grok Panel (recommended)</a></li>
-        <li><a href="#bridge">Terminal bridge</a></li>
-        <li><a href="#console">Resolve console</a></li>
-        <li><a href="#scan">Downloads scan</a></li>
+        <li><a href="#imdb">IMDb search setup</a></li>
+        <li><a href="#keys">API keys</a></li>
         <li><a href="#folders">Folder layout</a></li>
         <li><a href="#troubleshooting">Troubleshooting</a></li>
       </ul>
     </nav>
 
-    <section id="what">
-      <h2>What this is</h2>
+    <section id="optimize">
+      <h2>Workflow optimization chart</h2>
       <p>
-        This tool connects Grok-generated images and video to your Resolve project without needing
-        Resolve Studio or the Higgsfield Workflow Integration plugin.
+        Use tabs in this order for the fastest pipe. Each step feeds the next; skip only what you already have on disk.
       </p>
-      <p>Typical flow:</p>
-      <ol>
-        <li>Generate or download Grok media.</li>
-        <li>Files land in <code>video/</code> or <code>image/</code> inside your public folder.</li>
-        <li>Import into the <strong>active bin</strong> you have selected in the Media Pool.</li>
-      </ol>
-      <div class="note ok">
-        Works on <strong>Resolve Free</strong> using Utility scripts under
-        <code>Workspace → Scripts → Utility</code>.
+      <div class="chart-wrap">
+        <pre class="mermaid">
+flowchart LR
+  subgraph setup["① Setup (once)"]
+    I[Install Grok.lua]
+    B[Bootstrap tab]
+    K[grok-secrets.env]
+  end
+  subgraph ingest["② Ingest media"]
+    S[Scan tab]
+    BR[Browser tab]
+    IM[Import tab]
+  end
+  subgraph create["③ Create"]
+    ID[IMDb tab]
+    CV[Canvas tab]
+    G[Generate Video]
+  end
+  subgraph edit["④ Edit & iterate"]
+    TL[Timeline tab]
+    TR[Terminal tab]
+    RG[Batch Regenerate]
+  end
+  subgraph publish["⑤ Publish optional"]
+    ST[Stream tab]
+    FD[Folder tab]
+  end
+  I --> B
+  B --> K
+  K --> S
+  S --> IM
+  BR --> CV
+  ID --> CV
+  CV --> G
+  G --> IM
+  IM --> TL
+  TL --> RG
+  RG --> CV
+  TR -. monitors .-> S
+  TR -. monitors .-> G
+  TL --> ST
+  ST --> FD
+        </pre>
       </div>
+
+      <table>
+        <thead>
+          <tr><th>Phase</th><th>Tab</th><th>When to use</th><th>Optimization tip</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="phase">Setup</td>
+            <td><strong>Bootstrap</strong></td>
+            <td>First launch or new Resolve project</td>
+            <td>Creates 4K bins (<code>03_clips/grok_generated</code>) so imports land in the right place.</td>
+          </tr>
+          <tr>
+            <td class="phase">Setup</td>
+            <td><strong>Bridge</strong> + <strong>Terminal</strong></td>
+            <td>Before any generation from Resolve console</td>
+            <td>Keep bridge running; Terminal tab tails logs so you never guess if a job finished.</td>
+          </tr>
+          <tr>
+            <td class="phase">Ingest</td>
+            <td><strong>Scan</strong></td>
+            <td>After downloading from grok.com</td>
+            <td>macOS metadata finds Grok URLs in Downloads — faster than manual drag.</td>
+          </tr>
+          <tr>
+            <td class="phase">Ingest</td>
+            <td><strong>Browser</strong></td>
+            <td>Prompt lives in Safari, not on disk yet</td>
+            <td>Pull prompt → Canvas; Push prompt → grok.com/imagine handoff.</td>
+          </tr>
+          <tr>
+            <td class="phase">Create</td>
+            <td><strong>IMDb</strong></td>
+            <td>You need look / mood references</td>
+            <td>Search title or feel → Add to Prompt → switches to Canvas. Requires TMDB key (see below).</td>
+          </tr>
+          <tr>
+            <td class="phase">Create</td>
+            <td><strong>Canvas</strong></td>
+            <td>Every generation</td>
+            <td>Pick preset slug + LUT viewer; footer <strong>Generate Video</strong> writes to <code>video/</code>.</td>
+          </tr>
+          <tr>
+            <td class="phase">Edit</td>
+            <td><strong>Import</strong></td>
+            <td>After generate or scan</td>
+            <td>Select target bin in Media Pool first — imports go to active bin.</td>
+          </tr>
+          <tr>
+            <td class="phase">Edit</td>
+            <td><strong>Timeline</strong></td>
+            <td>Clips already on the timeline</td>
+            <td>Scan Timeline → edit meta per clip → Batch Regenerate without leaving Resolve.</td>
+          </tr>
+          <tr>
+            <td class="phase">Publish</td>
+            <td><strong>Stream</strong></td>
+            <td>Live X.com workflow</td>
+            <td>OBS overlay + X Studio RTMP; optional <code>X_BEARER_TOKEN</code> for announcements.</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
 
-    <section id="requirements">
-      <h2>Requirements</h2>
-      <ul>
-        <li>macOS (tested; metadata scan uses macOS download tags)</li>
-        <li>DaVinci Resolve with Fusion scripting enabled</li>
-        <li>Python 3 on your Mac</li>
-        <li>xAI API key for chat and generation: <code>export XAI_API_KEY=your-key</code></li>
-        <li>A clone of this repo on disk</li>
-      </ul>
-      <div class="note">
-        The Higgsfield <code>.pkg</code> plugin is a separate Studio-only Workflow Integration.
-        This project is the Resolve Free workaround: folder + scripts + terminal bridge.
+    <section id="tabs">
+      <h2>UI tab snapshots</h2>
+      <p>
+        Open via <code>Workspace → Scripts → Grok</code>. Eleven tabs — Resolve cool blue-grey theme, orange accent bar.
+      </p>
+      <div class="tab-grid">
+        <figure class="tab-card">
+          <img src="images/tab-canvas.png" alt="Canvas tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Canvas</strong> — preset picker, prompt editor, LUT viewer, content meta, Generate Video footer.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-import.png" alt="Import tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Import</strong> — import <code>video/</code> and <code>image/</code> into the active Media Pool bin.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-scan.png" alt="Scan tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Scan</strong> — find Grok downloads via macOS URL metadata, move into public folder.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-bootstrap.png" alt="Bootstrap tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Bootstrap</strong> — create 4K bins and <code>grok_generated</code> import target.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-bridge.png" alt="Bridge tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Bridge</strong> — start terminal bridge for Resolve console ↔ Grok API.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-terminal.png" alt="Terminal tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Terminal</strong> — in-window workflow logs, bridge status, run actions.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-timeline.png" alt="Timeline tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Timeline</strong> — scan V-tracks for Grok clips, edit meta, batch regenerate.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-browser.png" alt="Browser tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Browser</strong> — Safari ↔ grok.com/imagine via inbox/outbox JSON + clipboard.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-imdb.png" alt="IMDb tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>IMDb</strong> — TMDB title/feel search, posters, trivia, add references to prompt.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-stream.png" alt="Stream tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Stream</strong> — X.com live overlay, X Studio RTMP, workflow announcements.</figcaption>
+        </figure>
+        <figure class="tab-card">
+          <img src="images/tab-folder.png" alt="Folder tab" width="960" height="580" loading="lazy">
+          <figcaption><strong>Folder</strong> — open <code>grok-public-folder</code> in Finder.</figcaption>
+        </figure>
       </div>
     </section>
 
     <section id="install">
       <h2>Install</h2>
-      <h3>1. Clone the repo</h3>
+      <h3>1. Clone and install Resolve script</h3>
       <pre><code>git clone https://github.com/fornevercollective/grok-public-folder.git
-cd grok-public-folder</code></pre>
-
-      <h3>2. Pick your folder path</h3>
-      <p>
-        Scripts default to <code>/Users/tref/film/grok-public-folder</code>. After cloning elsewhere,
-        either clone to that path or update paths in:
-      </p>
-      <ul>
-        <li><code>resolve/utility/Grok Panel.py</code> — <code>GROK_ROOT</code></li>
-        <li><code>resolve/lua/grok_resolve.lua</code> — <code>ARTIFACTS</code></li>
-        <li><code>resolve/lua/grok_bridge.lua</code> — <code>BRIDGE</code></li>
-      </ul>
-      <p>
-        Python tools also respect <code>GROK_PUBLIC_FOLDER</code> if set before running
-        <code>bin/grok</code>, <code>bin/bridge</code>, or <code>bin/scan</code>.
-      </p>
-
-      <h3>3. Install Resolve Utility scripts</h3>
-      <pre><code>chmod +x install-resolve.sh
+cd grok-public-folder
+chmod +x install-resolve.sh bin/*
 ./install-resolve.sh</code></pre>
       <p>
-        Copies scripts into
-        <code>~/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Utility/</code>.
-        Restart Resolve or reload scripts if the menu does not update immediately.
+        Installs <code>Grok.lua</code> into Fusion Utility scripts. Resolve Free (19.1+) uses this Lua menu —
+        not the legacy Python panel.
       </p>
+      <pre><code>Workspace → Scripts → Grok</code></pre>
 
-      <h3>4. Add the folder to Media Storage (optional)</h3>
+      <h3>2. Set folder path (if not using default)</h3>
       <p>
-        In Resolve: <code>DaVinci Resolve → Preferences → Media Storage</code>, add your
-        <code>grok-public-folder</code> path so you can browse <code>video/</code> and
-        <code>image/</code> directly.
+        Defaults to your clone path. Override with <code>export GROK_PUBLIC_FOLDER=/path/to/grok-public-folder</code>
+        before running <code>bin/*</code> scripts, or edit <code>resolve/lua/grok_paths.lua</code>.
       </p>
-    </section>
 
-    <section id="panel">
-      <h2>Grok Panel (recommended)</h2>
-      <p>Open inside Resolve — no floating Terminal window required.</p>
-      <pre><code>Workspace → Scripts → Utility → Grok Panel</code></pre>
+      <h3>3. Bootstrap + Media Storage</h3>
+      <p>Inside the Grok UI: <strong>Bootstrap</strong> tab → Run Bootstrap. Optionally add the folder under
+        <code>DaVinci Resolve → Preferences → Media Storage</code>.
+      </p>
 
-      <table>
-        <thead>
-          <tr><th>Button</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>Scan Downloads</strong></td>
-            <td>Finds Grok downloads in <code>~/Downloads</code> via macOS URL metadata, asks Yes/No, then moves into <code>video/</code> or <code>image/</code>.</td>
-          </tr>
-          <tr>
-            <td><strong>Import</strong></td>
-            <td>Imports all media from the public folder into the <strong>active Media Pool bin</strong>.</td>
-          </tr>
-          <tr>
-            <td><strong>Preview</strong></td>
-            <td>Opens the latest files in Finder/Preview.</td>
-          </tr>
-          <tr>
-            <td><strong>Refresh</strong></td>
-            <td>Updates the inventory list in the panel.</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="note">
-        Select your target bin in the Media Pool <em>before</em> clicking Import.
-        Thumbnails appear after import.
+      <div class="note ok">
+        Works on <strong>Resolve Free</strong> — Utility scripts under <code>Workspace → Scripts</code>.
       </div>
     </section>
 
-    <section id="bridge">
-      <h2>Terminal bridge</h2>
+    <section id="imdb">
+      <h2>IMDb search setup</h2>
       <p>
-        Lets the Resolve Lua or Python console talk to Grok for chat, image, and video generation.
-        Resolve writes requests to <code>bridge/request.json</code>; Terminal writes responses to
-        <code>bridge/response.json</code>.
+        IMDb tab search uses the <strong>TMDB API</strong> (free). If search returns nothing or shows
+        <code>TMDB_API_KEY is not set</code>, configure secrets:
       </p>
+      <pre><code>cp project/grok-secrets.example.env project/grok-secrets.env</code></pre>
+      <p>
+        Get a free API key at
+        <a href="https://www.themoviedb.org/settings/api">themoviedb.org/settings/api</a>,
+        then edit <code>project/grok-secrets.env</code>:
+      </p>
+      <pre><code>TMDB_API_KEY=your-actual-key-here</code></pre>
+      <p>Or click <strong>Setup Keys</strong> in the IMDb tab — it copies the example file and opens <code>project/</code> in Finder.</p>
 
-      <h3>Start the bridge (Terminal)</h3>
-      <pre><code>export XAI_API_KEY=your-key
-/path/to/grok-public-folder/bin/bridge</code></pre>
-      <p>Leave this running. It watches for requests from Resolve.</p>
+      <h3>Verify from terminal</h3>
+      <pre><code>./bin/imdb status          # tmdb_configured: true
+./bin/imdb search "Blade Runner"</code></pre>
 
-      <h3>Terminal chat (no Resolve)</h3>
-      <pre><code>export XAI_API_KEY=your-key
-/path/to/grok-public-folder/bin/grok</code></pre>
-      <p>Commands inside the chat REPL:</p>
-      <pre><code>/image mars sunset over dunes
-/video slow orbit around a red planet --duration 10
-/import
-/help</code></pre>
+      <div class="note warn">
+        <strong>Why search failed before:</strong> without <code>grok-secrets.env</code>, TMDB requests were rejected.
+        The UI now surfaces the error and a Setup Keys shortcut instead of failing silently.
+      </div>
     </section>
 
-    <section id="console">
-      <h2>Resolve console</h2>
-
-      <h3>Lua console</h3>
-      <p>Load the bridge helper (use a function name — bare <code>grok</code> is invalid Lua):</p>
-      <pre><code>dofile("/path/to/grok-public-folder/resolve/lua/grok_bridge.lua")
-g()              -- help
-ping()           -- test bridge
-g("your prompt")
-g("/image prompt")
-g("/video prompt")
-import()         -- import into active bin</code></pre>
-
-      <h3>Python console (Py3)</h3>
-      <pre><code>exec(open("/path/to/grok-public-folder/grok_load.py").read(), globals())
-g("your prompt")
-import_artifacts()</code></pre>
-
-      <h3>Utility script shortcuts</h3>
-      <pre><code>Workspace → Scripts → Utility → Import Grok Artifacts
-Workspace → Scripts → Utility → Grok Console
-Workspace → Scripts → Utility → Grok Console Import</code></pre>
-    </section>
-
-    <section id="scan">
-      <h2>Downloads scan</h2>
-      <p>Run from Terminal outside Resolve:</p>
-      <pre><code>/path/to/grok-public-folder/bin/scan</code></pre>
-      <p>
-        Scans <code>~/Downloads</code> for files whose macOS metadata references
-        <code>grok.com</code>, <code>x.ai</code>, or related hosts. Shows a Yes/No dialog before
-        moving files. Each moved file gets a <code>.grok.json</code> sidecar with source metadata.
-      </p>
+    <section id="keys">
+      <h2>API keys</h2>
+      <p>All keys live in <code>project/grok-secrets.env</code> (gitignored). Never commit this file.</p>
+      <table>
+        <thead>
+          <tr><th>Key</th><th>Required for</th><th>Get it</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>TMDB_API_KEY</code></td>
+            <td>IMDb tab title search, detail, posters</td>
+            <td><a href="https://www.themoviedb.org/settings/api">themoviedb.org/settings/api</a></td>
+          </tr>
+          <tr>
+            <td><code>XAI_API_KEY</code></td>
+            <td>Canvas generate, feel search, trivia, bridge</td>
+            <td><a href="https://console.x.ai/">console.x.ai</a></td>
+          </tr>
+          <tr>
+            <td><code>X_BEARER_TOKEN</code></td>
+            <td>Stream tab X announcements (optional)</td>
+            <td>X developer portal</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
 
     <section id="folders">
       <h2>Folder layout</h2>
       <pre><code>grok-public-folder/
-├── video/          clips land here
-├── image/          stills land here
-├── bridge/         lua/python ↔ terminal handoff
+├── video/              generated clips
+├── image/              stills
+├── imdb/               TMDB cache + posters
+├── browser/            Safari handoff (inbox/outbox)
+├── bridge/             Resolve ↔ terminal JSON
+├── project/
+│   ├── grok-secrets.env      ← your keys (gitignored)
+│   └── grok-secrets.example.env
 ├── bin/
-│   ├── grok        terminal chat + generation
-│   ├── bridge      bridge daemon for resolve console
-│   └── scan        scan downloads
-├── resolve/
-│   ├── lua/        console helpers
-│   └── utility/    panel + import scripts (copied by install-resolve.sh)
-└── install-resolve.sh</code></pre>
-
-      <h3>Metadata sidecars</h3>
-      <pre><code>clip.mp4
-clip.mp4.grok.json</code></pre>
+│   ├── grok-menu       Swift UI launcher
+│   ├── imdb            movie search CLI
+│   ├── timeline        timeline scan/batch
+│   ├── bridge          bridge daemon
+│   └── scan            Downloads scan
+└── resolve/
+    ├── lua/            console helpers
+    └── utility/Grok.lua</code></pre>
     </section>
 
     <section id="troubleshooting">
       <h2>Troubleshooting</h2>
-
       <table>
         <thead>
           <tr><th>Problem</th><th>Fix</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td><code>'=' expected near '&lt;eof&gt;'</code> when typing <code>grok</code> in Lua</td>
-            <td><code>grok</code> alone is not valid Lua. Use <code>g()</code> or <code>g("message")</code>.</td>
+            <td>IMDb search returns no results / error</td>
+            <td>Create <code>project/grok-secrets.env</code> with <code>TMDB_API_KEY</code>. Run <code>./bin/imdb status</code>.</td>
           </tr>
           <tr>
-            <td><code>Resolve()</code> is nil in console</td>
-            <td>Use <strong>Grok Panel</strong> instead, or run import from Utility scripts. Console context varies by Resolve version.</td>
+            <td>IMDb tab shows TMDB ✗</td>
+            <td>Click <strong>Setup Keys</strong> or copy <code>grok-secrets.example.env</code> → <code>grok-secrets.env</code>.</td>
+          </tr>
+          <tr>
+            <td>Generate fails</td>
+            <td>Set <code>XAI_API_KEY</code> in <code>grok-secrets.env</code>. Start bridge from Bridge tab.</td>
           </tr>
           <tr>
             <td>Imported 0 files</td>
-            <td><code>video/</code> and <code>image/</code> are empty. Generate or scan Downloads first.</td>
+            <td><code>video/</code> empty — Scan Downloads or Generate first. Select target bin before Import.</td>
           </tr>
           <tr>
-            <td>Bridge times out</td>
-            <td>Start <code>bin/bridge</code> in Terminal and set <code>XAI_API_KEY</code>.</td>
+            <td>Scripts missing in Resolve</td>
+            <td>Re-run <code>./install-resolve.sh</code> and restart Resolve.</td>
           </tr>
           <tr>
-            <td>Scripts missing in Resolve menu</td>
-            <td>Run <code>./install-resolve.sh</code> and restart Resolve.</td>
-          </tr>
-          <tr>
-            <td>Wrong folder in panel</td>
-            <td>Update <code>GROK_ROOT</code> in <code>resolve/utility/Grok Panel.py</code>, then re-run install.</td>
+            <td>Timeline scan empty</td>
+            <td>Open a timeline with Grok clips, then Timeline tab → Scan Timeline.</td>
           </tr>
         </tbody>
       </table>
@@ -352,7 +471,23 @@ clip.mp4.grok.json</code></pre>
 
   <footer class="wrap">
     <a href="https://github.com/fornevercollective/grok-public-folder">GitHub repository</a>
-    · Built for Resolve Free + Grok Imagine workflow
+    · <a href="https://fornevercollective.github.io/grok-public-folder/">GitHub Pages</a>
+    · Built for Resolve Free + Grok Imagine
   </footer>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "dark",
+      themeVariables: {
+        primaryColor: "#25272b",
+        primaryTextColor: "#e8eaed",
+        primaryBorderColor: "#4a4d53",
+        lineColor: "#f98b14",
+        secondaryColor: "#1b1d20",
+        tertiaryColor: "#17191c"
+      }
+    });
+  </script>
 </body>
 </html>
