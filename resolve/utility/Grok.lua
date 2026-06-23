@@ -191,9 +191,15 @@ local function handle_menu_output(output)
         action_generate(opts)
     elseif action == "Scan Timeline" then
         dofile(GROK_ROOT .. "/resolve/lua/grok_timeline.lua")
-        local count = grok_scan_timeline()
-        notify("Timeline scan: " .. tostring(count) .. " Grok clip(s)")
-        handle_menu_output(run_menu_ui("choose", "timeline"))
+        local ok, count = pcall(grok_scan_timeline)
+        if not ok then
+            print("timeline scan error: " .. tostring(count))
+            alert("Grok", "Timeline scan failed:\n" .. tostring(count))
+            notify("Timeline scan failed — see Resolve console")
+        else
+            notify("Timeline scan: " .. tostring(count) .. " Grok clip(s) — reopen Grok to view")
+            print("timeline scan done: " .. tostring(count) .. " clip(s)")
+        end
     elseif action == "Batch Regenerate Timeline" then
         alert("Opening Terminal", trust_terminal_message(
             "Batch Regenerate Timeline",

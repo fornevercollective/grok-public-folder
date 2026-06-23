@@ -39,6 +39,19 @@ struct TimelineClip: Codable {
     }
 }
 
+struct TimelineScanResponse: Codable {
+    let ok: Bool?
+    let error: String?
+    let clipCount: Int?
+    let fallback: Bool?
+    let note: String?
+
+    enum CodingKeys: String, CodingKey {
+        case ok, error, fallback, note
+        case clipCount = "clip_count"
+    }
+}
+
 enum TimelineBridge {
     static var binURL: URL { GrokPaths.root.appendingPathComponent("bin/timeline") }
 
@@ -63,6 +76,28 @@ enum TimelineBridge {
         let result = run(["load"])
         guard result.ok, let data = result.output.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(TimelineScan.self, from: data)
+    }
+
+    static func scanTimeline(artifactsOnly: Bool = false) -> (ok: Bool, needsLuaScan: Bool, message: String) {
+        var args = ["scan"]
+        if artifactsOnly { args.append("--artifacts-only") }
+        let result = run(args)
+        guard let data = result.output.data(using: .utf8),
+              let payload = try? JSONDecoder().decode(TimelineScanResponse.self, from: data) else {
+            let text = result.output.isEmpty ? "Timeline scan failed" : result.output
+            return (false, false, text)
+        }
+        if payload.ok == true {
+            let count = payload.clipCount ?? 0
+            var msg = "Scanned \(count) Grok clip(s)"
+            if payload.fallback == true {
+                msg += " (artifacts fallback — no timeline positions)"
+            }
+            return (true, false, msg)
+        }
+        let err = payload.error ?? "Timeline scan failed"
+        let needsLua = err.localizedCaseInsensitiveContains("resolve not connected")
+        return (false, needsLua, err)
     }
 }
 
@@ -89,7 +124,7 @@ final class TimelineTabController: NSObject {
         UIHelpers.styleSectionHeading(heading)
 
         let intro = NSTextField(wrappingLabelWithString:
-            "Scan the active Resolve timeline for Grok footage. Edit prompts and meta per clip, or batch-update and queue regenerates."
+            "Scan the active timeline for Grok footage (stays in this panel). Edit prompts per clip, or batch-update and queue regenerates."
         )
         UIHelpers.styleBodyText(intro)
 
@@ -202,7 +237,26 @@ final class TimelineTabController: NSObject {
         return panel
     }
 
-    @objc private func scanPressed() { onScanTimeline?() }
+    @objc private func scanPressed() {
+        statusLabel.stringValue = "Scanning timeline…"
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let outcome = TimelineBridge.scanTimeline()
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if outcome.ok {
+                    self.reloadFromDisk()
+                    self.statusLabel.stringValue = outcome.message
+                    return
+                }
+                if outcome.needsLuaScan {
+                    self.statusLabel.stringValue = "Using Resolve script scan…"
+                    self.onScanTimeline?()
+                    return
+                }
+                self.statusLabel.stringValue = outcome.message
+            }
+        }
+    }
 
     @objc private func refreshPressed() { reloadFromDisk() }
 

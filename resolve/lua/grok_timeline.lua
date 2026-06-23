@@ -44,10 +44,29 @@ local function read_sidecar_json(media_path)
     end
     local content = file:read("*a")
     file:close()
-    if content and content ~= "" then
+    if content and content ~= "" and content:match("^%s*{") then
         return content
     end
     return nil
+end
+
+local function safe_call(fn, default)
+    local ok, result = pcall(fn)
+    if ok and result ~= nil then
+        return result
+    end
+    return default
+end
+
+local function item_frame(item, method, default)
+    if not item then
+        return default
+    end
+    local getter = item[method]
+    if type(getter) ~= "function" then
+        return default
+    end
+    return safe_call(function() return getter(item) end, default)
 end
 
 local function is_grok_media(file_path, file_name)
@@ -118,19 +137,46 @@ function grok_scan_timeline()
     local track_count = timeline:GetTrackCount("video") or 0
 
     for track_index = 1, track_count do
-        local items = timeline:GetItemListInTrack("video", track_index)
+        local items = safe_call(function() return timeline:GetItemListInTrack("video", track_index) end, nil)
         if items then
-            for item_index, item in ipairs(items) do
-                local media_item = item:GetMediaPoolItem()
-                if media_item then
-                    local file_path = clip_property(media_item, "File Path")
-                    local file_name = clip_property(media_item, "File Name")
-                    if file_name == "" then
-                        file_name = media_item:GetName() or ""
-                    end
-                    if is_grok_media(file_path, file_name) then
-                        local start_frame = item:GetStart() or 0
-                        local end_frame = item:GetEnd() or 0
+            local item_count = #items
+            if item_count == 0 then
+                item_count = safe_call(function() return items.GetCount and items:GetCount() or 0 end, 0)
+            end
+            local indices = {}
+            if item_count > 0 then
+                for i = 1, item_count do
+                    table.insert(indices, i)
+                end
+            else
+                for i, _ in ipairs(items) do
+                    table.insert(indices, i)
+                end
+            end
+            for _, item_index in ipairs(indices) do
+                local item = items[item_index]
+                if item then
+                    local ok_item, err_item = pcall(function()
+                        local media_item = safe_call(function() return item:GetMediaPoolItem() end, nil)
+                        if not media_item then
+                            return
+                        end
+                        local file_path = clip_property(media_item, "File Path")
+                        local file_name = clip_property(media_item, "File Name")
+                        if file_name == "" then
+                            file_name = safe_call(function() return media_item:GetName() end, "") or ""
+                        end
+                        if not is_grok_media(file_path, file_name) then
+                            return
+                        end
+                        local start_frame = item_frame(item, "GetStart", 0)
+                        local end_frame = item_frame(item, "GetEnd", 0)
+                        if end_frame <= start_frame then
+                            local duration_frames = item_frame(item, "GetDuration", 0)
+                            if duration_frames > 0 then
+                                end_frame = start_frame + duration_frames
+                            end
+                        end
                         local duration = end_frame - start_frame
                         if duration < 0 then
                             duration = 0
@@ -149,6 +195,9 @@ function grok_scan_timeline()
                             timeline_out = frames_to_timecode(end_frame, fps),
                             sidecar_raw = sidecar_raw,
                         })
+                    end)
+                    if not ok_item then
+                        print("timeline scan: skipped item v" .. track_index .. "_" .. item_index .. ": " .. tostring(err_item))
                     end
                 end
             end

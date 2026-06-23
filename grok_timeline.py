@@ -92,33 +92,40 @@ def scan_resolve_timeline() -> dict:
     for track_index in range(1, track_count + 1):
         items = timeline.GetItemListInTrack("video", track_index) or []
         for item_index, item in enumerate(items, start=1):
-            media_item = item.GetMediaPoolItem()
-            if not media_item:
-                continue
-            file_path = str(media_item.GetClipProperty("File Path") or "")
-            file_name = str(media_item.GetClipProperty("File Name") or media_item.GetName() or "")
-            if not _is_grok_path(file_path, file_name):
-                continue
-            start_frame = int(item.GetStart() or 0)
-            end_frame = int(item.GetEnd() or 0)
-            duration = max(0, end_frame - start_frame)
-            sidecar = read_sidecar(Path(file_path)) if file_path else None
-            clips.append(
-                {
-                    "id": f"v{track_index}_{item_index}",
-                    "track": track_index,
-                    "track_type": "video",
-                    "name": file_name,
-                    "file_path": file_path,
-                    "start_frame": start_frame,
-                    "end_frame": end_frame,
-                    "duration_frames": duration,
-                    "timeline_in": _frames_to_tc(start_frame, fps),
-                    "timeline_out": _frames_to_tc(end_frame, fps),
-                    "sidecar": sidecar,
-                    "is_grok": True,
-                }
-            )
+            try:
+                media_item = item.GetMediaPoolItem()
+                if not media_item:
+                    continue
+                file_path = str(media_item.GetClipProperty("File Path") or "")
+                file_name = str(media_item.GetClipProperty("File Name") or media_item.GetName() or "")
+                if not _is_grok_path(file_path, file_name):
+                    continue
+                start_frame = int(item.GetStart() or 0)
+                end_frame = int(item.GetEnd() or 0)
+                if end_frame <= start_frame:
+                    duration_frames = int(item.GetDuration() or 0)
+                    if duration_frames > 0:
+                        end_frame = start_frame + duration_frames
+                duration = max(0, end_frame - start_frame)
+                sidecar = read_sidecar(Path(file_path)) if file_path else None
+                clips.append(
+                    {
+                        "id": f"v{track_index}_{item_index}",
+                        "track": track_index,
+                        "track_type": "video",
+                        "name": file_name,
+                        "file_path": file_path,
+                        "start_frame": start_frame,
+                        "end_frame": end_frame,
+                        "duration_frames": duration,
+                        "timeline_in": _frames_to_tc(start_frame, fps),
+                        "timeline_out": _frames_to_tc(end_frame, fps),
+                        "sidecar": sidecar,
+                        "is_grok": True,
+                    }
+                )
+            except Exception as exc:
+                print(f"timeline scan: skipped v{track_index}_{item_index}: {exc}", file=sys.stderr)
 
     payload = {
         "scanned_at": datetime.now(timezone.utc).isoformat(),
