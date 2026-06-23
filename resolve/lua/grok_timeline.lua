@@ -110,7 +110,58 @@ local function frames_to_timecode(frames, fps)
     return string.format("%02d:%02d:%02d:%02d", h, m, s, f)
 end
 
-function grok_scan_timeline()
+local function resolve_timeline(project, timeline_index)
+    if timeline_index and tonumber(timeline_index) then
+        local idx = tonumber(timeline_index)
+        local tl = safe_call(function() return project:GetTimelineByIndex(idx) end, nil)
+        if tl then
+            safe_call(function() project:SetCurrentTimeline(tl) end)
+            return tl, idx
+        end
+        print("timeline index not found: " .. tostring(idx))
+        return nil, idx
+    end
+    local tl = safe_call(function() return project:GetCurrentTimeline() end, nil)
+    return tl, nil
+end
+
+function grok_list_timelines()
+    local resolve = grok_get_resolve()
+    if not resolve then
+        print("resolve not connected")
+        return nil
+    end
+    local project = resolve:GetProjectManager():GetCurrentProject()
+    if not project then
+        print("open a project first")
+        return nil
+    end
+    local current = safe_call(function() return project:GetCurrentTimeline() end, nil)
+    local current_name = current and safe_call(function() return current:GetName() end, "") or ""
+    local count = safe_call(function() return project:GetTimelineCount() end, 0) or 0
+    print('{"ok":true,"project_name":' .. json_escape(project:GetName() or "Project") .. ',"timeline_count":' .. count .. ',"timelines":[')
+    for idx = 1, count do
+        local tl = safe_call(function() return project:GetTimelineByIndex(idx) end, nil)
+        if tl then
+            local name = safe_call(function() return tl:GetName() end, "") or ("Timeline " .. idx)
+            local is_current = (current_name ~= "" and name == current_name)
+            local suffix = idx < count and "," or ""
+            print(
+                '{"index":' ..
+                    idx ..
+                    ',"name":' ..
+                    json_escape(name) ..
+                    ',"is_current":' ..
+                    (is_current and "true" or "false") ..
+                    "}" .. suffix
+            )
+        end
+    end
+    print("]}")
+    return count
+end
+
+function grok_scan_timeline(timeline_index)
     local resolve = grok_get_resolve()
     if not resolve then
         print("resolve not connected")
@@ -123,7 +174,7 @@ function grok_scan_timeline()
         return 0
     end
 
-    local timeline = project:GetCurrentTimeline()
+    local timeline, index_used = resolve_timeline(project, timeline_index)
     if not timeline then
         print("open a timeline first")
         return 0
@@ -215,6 +266,11 @@ function grok_scan_timeline()
     file:write('  "scanned_at": ' .. json_escape(stamp) .. ",\n")
     file:write('  "project_name": ' .. json_escape(project_name) .. ",\n")
     file:write('  "timeline_name": ' .. json_escape(timeline_name) .. ",\n")
+    if index_used then
+        file:write('  "timeline_index": ' .. index_used .. ",\n")
+    else
+        file:write('  "timeline_index": null,\n')
+    end
     file:write('  "fps": ' .. json_escape(fps) .. ",\n")
     file:write('  "clip_count": ' .. #clips .. ",\n")
     file:write('  "clips": [\n')

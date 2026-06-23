@@ -52,6 +52,35 @@ struct TimelineScanResponse: Codable {
     }
 }
 
+struct TimelineListEntry: Codable {
+    let index: Int
+    let name: String
+    let isCurrent: Bool?
+    let durationLabel: String?
+
+    enum CodingKeys: String, CodingKey {
+        case index, name
+        case isCurrent = "is_current"
+        case durationLabel = "duration_label"
+    }
+}
+
+struct TimelineListResponse: Codable {
+    let ok: Bool?
+    let error: String?
+    let projectName: String?
+    let timelineCount: Int?
+    let currentTimeline: String?
+    let timelines: [TimelineListEntry]?
+
+    enum CodingKeys: String, CodingKey {
+        case ok, error, timelines
+        case projectName = "project_name"
+        case timelineCount = "timeline_count"
+        case currentTimeline = "current_timeline"
+    }
+}
+
 enum TimelineBridge {
     static var binURL: URL { GrokPaths.root.appendingPathComponent("bin/timeline") }
 
@@ -78,9 +107,22 @@ enum TimelineBridge {
         return try? JSONDecoder().decode(TimelineScan.self, from: data)
     }
 
-    static func scanTimeline(artifactsOnly: Bool = false) -> (ok: Bool, needsLuaScan: Bool, message: String) {
+    static func listTimelines() -> TimelineListResponse? {
+        let result = run(["list-timelines"])
+        guard let data = result.output.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(TimelineListResponse.self, from: data)
+    }
+
+    static func scanTimeline(
+        artifactsOnly: Bool = false,
+        timelineIndex: Int? = nil
+    ) -> (ok: Bool, needsLuaScan: Bool, message: String) {
         var args = ["scan"]
-        if artifactsOnly { args.append("--artifacts-only") }
+        if artifactsOnly {
+            args.append("--artifacts-only")
+        } else if let timelineIndex {
+            args += ["--timeline", String(timelineIndex)]
+        }
         let result = run(args)
         guard let data = result.output.data(using: .utf8),
               let payload = try? JSONDecoder().decode(TimelineScanResponse.self, from: data) else {
@@ -116,6 +158,8 @@ final class TimelineTabController: NSObject {
     private let lutField = NSTextField(string: "")
     private let continuityField = NSTextField(string: "")
     private let metaView = UIHelpers.metaTextView()
+    private let timelinePopup = NSPopUpButton()
+    private let projectLabel = NSTextField(labelWithString: "")
     private var activeClipId: String?
 
     func buildView() -> NSView {
@@ -124,7 +168,7 @@ final class TimelineTabController: NSObject {
         UIHelpers.styleSectionHeading(heading)
 
         let intro = NSTextField(wrappingLabelWithString:
-            "Scan the active timeline for Grok footage (stays in this panel). Edit prompts per clip, or batch-update and queue regenerates."
+            "Load project timelines, pick one to scan for Grok footage, then edit prompts per clip or batch-regenerate."
         )
         UIHelpers.styleBodyText(intro)
 
@@ -132,14 +176,28 @@ final class TimelineTabController: NSObject {
         statusLabel.textColor = GrokTheme.textSecondary
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let scanBtn = UIHelpers.flatButton("Scan Timeline", accent: true, target: self, action: #selector(scanPressed))
+        projectLabel.font = GrokTypography.caption
+        projectLabel.textColor = GrokTheme.textDim
+        projectLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        UIHelpers.stylePopup(timelinePopup)
+        timelinePopup.toolTip = "Timelines in the open Resolve project"
+
+        let loadTimelinesBtn = UIHelpers.flatButton("Load Timelines", accent: false, target: self, action: #selector(loadTimelinesPressed))
+        let scanBtn = UIHelpers.flatButton("Scan Selected", accent: true, target: self, action: #selector(scanPressed))
         let refreshBtn = UIHelpers.flatButton("Refresh", accent: false, target: self, action: #selector(refreshPressed))
         let artifactBtn = UIHelpers.flatButton("Scan Artifacts", accent: false, target: self, action: #selector(artifactsPressed))
         let saveBtn = UIHelpers.flatButton("Save Meta", accent: false, target: self, action: #selector(savePressed))
         let batchSaveBtn = UIHelpers.flatButton("Batch Save", accent: false, target: self, action: #selector(batchSavePressed))
         let batchGenBtn = UIHelpers.flatButton("Batch Regenerate", accent: true, target: self, action: #selector(batchGenPressed))
         let addPromptBtn = UIHelpers.flatButton("Add to Prompt", accent: false, target: self, action: #selector(addPromptPressed))
-        let topRow = NSStackView(views: [scanBtn, refreshBtn, artifactBtn, saveBtn, batchSaveBtn, batchGenBtn, addPromptBtn])
+        let timelineLabel = UIHelpers.fieldLabel("Timeline")
+        let timelineRow = NSStackView(views: [timelinePopup, loadTimelinesBtn, scanBtn])
+        timelineRow.orientation = .horizontal
+        timelineRow.spacing = 8
+        timelineRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let topRow = NSStackView(views: [refreshBtn, artifactBtn, saveBtn, batchSaveBtn, batchGenBtn, addPromptBtn])
         topRow.orientation = .horizontal
         topRow.spacing = 6
         topRow.translatesAutoresizingMaskIntoConstraints = false
@@ -186,6 +244,9 @@ final class TimelineTabController: NSObject {
         panel.addSubview(heading)
         panel.addSubview(intro)
         panel.addSubview(statusLabel)
+        panel.addSubview(projectLabel)
+        panel.addSubview(timelineLabel)
+        panel.addSubview(timelineRow)
         panel.addSubview(topRow)
         panel.addSubview(left)
         panel.addSubview(right)
@@ -198,7 +259,15 @@ final class TimelineTabController: NSObject {
             intro.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -14),
             statusLabel.topAnchor.constraint(equalTo: intro.bottomAnchor, constant: 4),
             statusLabel.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
-            topRow.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 8),
+            projectLabel.topAnchor.constraint(equalTo: statusLabel.bottomAnchor, constant: 2),
+            projectLabel.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
+            timelineLabel.topAnchor.constraint(equalTo: projectLabel.bottomAnchor, constant: 8),
+            timelineLabel.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
+            timelineRow.topAnchor.constraint(equalTo: timelineLabel.bottomAnchor, constant: 4),
+            timelineRow.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
+            timelineRow.trailingAnchor.constraint(lessThanOrEqualTo: panel.trailingAnchor, constant: -14),
+            timelinePopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 220),
+            topRow.topAnchor.constraint(equalTo: timelineRow.bottomAnchor, constant: 8),
             topRow.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
             left.topAnchor.constraint(equalTo: topRow.bottomAnchor, constant: 10),
             left.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
@@ -234,13 +303,76 @@ final class TimelineTabController: NSObject {
             metaScroll.bottomAnchor.constraint(equalTo: right.bottomAnchor, constant: -10),
         ])
         reloadFromDisk()
+        loadTimelines()
         return panel
     }
 
+    private func selectedTimelineIndex() -> Int? {
+        guard let obj = timelinePopup.selectedItem?.representedObject as? Int else { return nil }
+        return obj
+    }
+
+    private func writeScanRequest(timelineIndex: Int?) {
+        let path = GrokPaths.projectDir.appendingPathComponent("timeline-scan-request.json")
+        var payload: [String: Any] = [:]
+        if let timelineIndex {
+            payload["timeline_index"] = timelineIndex
+        }
+        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted]) else { return }
+        try? data.write(to: path)
+    }
+
+    private func reloadTimelinePopup(_ response: TimelineListResponse) {
+        timelinePopup.removeAllItems()
+        let entries = response.timelines ?? []
+        if entries.isEmpty {
+            timelinePopup.addItem(withTitle: "(no timelines — open a project)")
+            return
+        }
+        for entry in entries {
+            var title = "\(entry.index). \(entry.name)"
+            if entry.isCurrent == true { title += " · active" }
+            if let dur = entry.durationLabel, !dur.isEmpty { title += " · \(dur)" }
+            timelinePopup.addItem(withTitle: title)
+            timelinePopup.lastItem?.representedObject = entry.index
+            if entry.isCurrent == true {
+                timelinePopup.selectItem(at: timelinePopup.numberOfItems - 1)
+            }
+        }
+        if timelinePopup.indexOfSelectedItem < 0 {
+            timelinePopup.selectItem(at: 0)
+        }
+    }
+
+    private func loadTimelines() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let response = TimelineBridge.listTimelines()
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let response, response.ok == true {
+                    self.reloadTimelinePopup(response)
+                    let proj = response.projectName ?? "Project"
+                    let count = response.timelineCount ?? 0
+                    self.projectLabel.stringValue = "\(proj) · \(count) timeline(s)"
+                    if self.statusLabel.stringValue.hasPrefix("No scan yet") {
+                        self.statusLabel.stringValue = "Select a timeline and Scan Selected"
+                    }
+                } else {
+                    self.timelinePopup.removeAllItems()
+                    self.timelinePopup.addItem(withTitle: "(Resolve not connected — Load Timelines)")
+                    self.projectLabel.stringValue = response?.error ?? "Open a Resolve project, then Load Timelines"
+                }
+            }
+        }
+    }
+
+    @objc private func loadTimelinesPressed() { loadTimelines() }
+
     @objc private func scanPressed() {
+        let index = selectedTimelineIndex()
         statusLabel.stringValue = "Scanning timeline…"
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let outcome = TimelineBridge.scanTimeline()
+            let outcome = TimelineBridge.scanTimeline(timelineIndex: index)
             DispatchQueue.main.async {
                 guard let self else { return }
                 if outcome.ok {
@@ -249,6 +381,7 @@ final class TimelineTabController: NSObject {
                     return
                 }
                 if outcome.needsLuaScan {
+                    self.writeScanRequest(timelineIndex: index)
                     self.statusLabel.stringValue = "Using Resolve script scan…"
                     self.onScanTimeline?()
                     return

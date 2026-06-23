@@ -191,7 +191,16 @@ local function handle_menu_output(output)
         action_generate(opts)
     elseif action == "Scan Timeline" then
         dofile(GROK_ROOT .. "/resolve/lua/grok_timeline.lua")
-        local ok, count = pcall(grok_scan_timeline)
+        local scan_index = nil
+        local req_path = GROK_PROJECT .. "/timeline-scan-request.json"
+        local req_file = io.open(req_path, "r")
+        if req_file then
+            local body = req_file:read("*a") or ""
+            req_file:close()
+            scan_index = tonumber(body:match('"timeline_index"%s*:%s*(%d+)'))
+            os.remove(req_path)
+        end
+        local ok, count = pcall(function() return grok_scan_timeline(scan_index) end)
         if not ok then
             print("timeline scan error: " .. tostring(count))
             alert("Grok", "Timeline scan failed:\n" .. tostring(count))

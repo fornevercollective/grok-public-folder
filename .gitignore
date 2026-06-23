@@ -21,6 +21,7 @@ project/grok-secrets.env
 project/token-meter.json
 project/.grok-root
 project/timeline-grok-clips.json
+project/timeline-scan-request.json
 project/timeline-batch-save.json
 bridge/timeline-batch.json
 bin/grok-menu-ui

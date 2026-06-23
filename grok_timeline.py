@@ -13,6 +13,7 @@ from grok_meta import read_sidecar, sidecar_path, write_sidecar
 from grok_paths import BRIDGE_DIR, IMAGE_DIR, PROJECT_DIR, ROOT, VIDEO_DIR
 
 SCAN_FILE = PROJECT_DIR / "timeline-grok-clips.json"
+SCAN_REQUEST_FILE = PROJECT_DIR / "timeline-scan-request.json"
 BATCH_FILE = BRIDGE_DIR / "timeline-batch.json"
 MEDIA_DIRS = (VIDEO_DIR, IMAGE_DIR)
 
@@ -63,15 +64,15 @@ def load_scan(enrich: bool = True) -> dict:
     return data
 
 
-def scan_resolve_timeline() -> dict:
+def _get_resolve_project():
     try:
         from grok_api import get_resolve
     except ImportError:
-        return {"ok": False, "error": "grok_api unavailable", "clips": []}
+        return None, {"ok": False, "error": "grok_api unavailable", "clips": []}
 
     resolve = get_resolve()
     if not resolve:
-        return {
+        return None, {
             "ok": False,
             "error": "Resolve not connected — use Scan Timeline from Grok menu inside Resolve",
             "clips": [],
@@ -79,10 +80,105 @@ def scan_resolve_timeline() -> dict:
 
     project = resolve.GetProjectManager().GetCurrentProject()
     if not project:
-        return {"ok": False, "error": "open a project first", "clips": []}
+        return None, {"ok": False, "error": "open a project first", "clips": []}
+    return project, None
+
+
+def _timeline_duration_label(timeline) -> str | None:
+    try:
+        start = int(timeline.GetStartFrame() or 0)
+        end = int(timeline.GetEndFrame() or 0)
+        if end > start:
+            frames = end - start
+            return f"{frames} fr"
+    except Exception:
+        pass
+    return None
+
+
+def list_project_timelines() -> dict:
+    project, err = _get_resolve_project()
+    if err:
+        return err
+
+    current = project.GetCurrentTimeline()
+    current_name = current.GetName() if current else None
+    count = int(project.GetTimelineCount() or 0)
+    timelines: list[dict] = []
+    for idx in range(1, count + 1):
+        try:
+            tl = project.GetTimelineByIndex(idx)
+        except Exception:
+            tl = None
+        if not tl:
+            continue
+        name = str(tl.GetName() or f"Timeline {idx}")
+        is_current = False
+        if current is not None:
+            try:
+                is_current = tl == current
+            except Exception:
+                is_current = name == (current_name or "")
+        if not is_current and current_name:
+            is_current = name == current_name
+        timelines.append(
+            {
+                "index": idx,
+                "name": name,
+                "is_current": is_current,
+                "duration_label": _timeline_duration_label(tl),
+            }
+        )
+
+    return {
+        "ok": True,
+        "project_name": project.GetName(),
+        "timeline_count": len(timelines),
+        "current_timeline": current_name,
+        "timelines": timelines,
+    }
+
+
+def _select_timeline(project, timeline_index: int | None = None, timeline_name: str | None = None):
+    if timeline_index is not None:
+        timeline = project.GetTimelineByIndex(int(timeline_index))
+        if not timeline:
+            return None, f"timeline index {timeline_index} not found"
+        try:
+            project.SetCurrentTimeline(timeline)
+        except Exception:
+            pass
+        return timeline, None
+
+    if timeline_name:
+        count = int(project.GetTimelineCount() or 0)
+        for idx in range(1, count + 1):
+            tl = project.GetTimelineByIndex(idx)
+            if tl and str(tl.GetName() or "") == timeline_name:
+                try:
+                    project.SetCurrentTimeline(tl)
+                except Exception:
+                    pass
+                return tl, None
+        return None, f"timeline not found: {timeline_name}"
+
     timeline = project.GetCurrentTimeline()
     if not timeline:
-        return {"ok": False, "error": "open a timeline first", "clips": []}
+        return None, "open a timeline first"
+    return timeline, None
+
+
+def scan_resolve_timeline(
+    timeline_index: int | None = None,
+    timeline_name: str | None = None,
+) -> dict:
+    project, err = _get_resolve_project()
+    if err:
+        return err
+
+    timeline, tl_err = _select_timeline(project, timeline_index, timeline_name)
+    if tl_err or not timeline:
+        return {"ok": False, "error": tl_err or "timeline not available", "clips": []}
 
     fps = float(project.GetSetting("timelineFrameRate") or 24)
     clips: list[dict] = []
@@ -127,10 +223,20 @@ def scan_resolve_timeline() -> dict:
             except Exception as exc:
                 print(f"timeline scan: skipped v{track_index}_{item_index}: {exc}", file=sys.stderr)
 
+    timeline_index_used = timeline_index
+    if timeline_index_used is None and timeline_name:
+        count = int(project.GetTimelineCount() or 0)
+        for idx in range(1, count + 1):
+            tl = project.GetTimelineByIndex(idx)
+            if tl and str(tl.GetName() or "") == str(timeline.GetName() or ""):
+                timeline_index_used = idx
+                break
+
     payload = {
         "scanned_at": datetime.now(timezone.utc).isoformat(),
         "project_name": project.GetName(),
         "timeline_name": timeline.GetName(),
+        "timeline_index": timeline_index_used,
         "fps": fps,
         "clip_count": len(clips),
         "clips": [_enrich_clip(c) for c in clips],
@@ -308,8 +414,11 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd")
 
     sub.add_parser("load", help="print scan json")
+    sub.add_parser("list-timelines", help="list timelines in the open Resolve project")
     p_scan = sub.add_parser("scan", help="scan via Python Resolve API (Studio) or artifacts")
     p_scan.add_argument("--artifacts-only", action="store_true")
+    p_scan.add_argument("--timeline", type=int, default=None, help="timeline index (1-based)")
+    p_scan.add_argument("--timeline-name", default=None, help="timeline name")
     p_update = sub.add_parser("update", help="update one clip sidecar")
     p_update.add_argument("--id", required=True)
     p_update.add_argument("--prompt", default="")
@@ -326,11 +435,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "load":
         print(json.dumps(load_scan(), indent=2))
         return 0
+    if args.cmd == "list-timelines":
+        print(json.dumps(list_project_timelines(), indent=2))
+        return 0
     if args.cmd == "scan":
         if args.artifacts_only:
             result = scan_artifacts_only()
         else:
-            result = scan_resolve_timeline()
+            result = scan_resolve_timeline(
+                timeline_index=args.timeline,
+                timeline_name=args.timeline_name,
+            )
             if not result.get("ok"):
                 result = scan_artifacts_only()
                 result["fallback"] = True
