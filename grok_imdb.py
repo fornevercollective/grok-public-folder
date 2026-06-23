@@ -295,6 +295,12 @@ def _xai_chat(prompt: str, system: str) -> str:
         "temperature": 0.4,
     }
     result = api_request("POST", "/chat/completions", key, payload, timeout=60)
+    try:
+        from grok_token_meter import record_from_api_response
+
+        record_from_api_response("imdb", result, fallback_prompt=prompt)
+    except Exception:
+        pass
     choices = result.get("choices") or []
     if not choices:
         return ""

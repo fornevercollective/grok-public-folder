@@ -72,6 +72,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private var streamController: StreamTabController?
     private var terminalController: TerminalTabController?
     private var timelineController: TimelineTabController?
+    private var headerMonitor: HeaderMonitorController?
 
     init(catalog: GenerateCatalog) {
         self.catalog = catalog
@@ -88,6 +89,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     }
 
     func windowWillClose(_ notification: Notification) {
+        headerMonitor?.stop()
         complete("CANCELLED")
     }
 
@@ -115,7 +117,12 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
 
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
-        let header = UIHelpers.headerView(title: GrokBrand.appName, subtitle: "Imagine canvas → Resolve edit")
+        let (header, monitor) = UIHelpers.headerView(
+            title: GrokBrand.appName,
+            subtitle: "Imagine canvas → Resolve edit",
+            includeMonitor: true
+        )
+        headerMonitor = monitor
         let tabs = buildTabBar()
         contentHost.translatesAutoresizingMaskIntoConstraints = false
 
@@ -156,6 +163,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         populateGenerateControls()
         reloadMediaStrip()
         updateActionFooter()
+        headerMonitor?.start()
         return window
     }
 

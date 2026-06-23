@@ -200,7 +200,11 @@ enum UIHelpers {
         field.translatesAutoresizingMaskIntoConstraints = false
     }
 
-    static func headerView(title: String, subtitle: String) -> NSView {
+    static func headerView(
+        title: String,
+        subtitle: String,
+        includeMonitor: Bool = false
+    ) -> (view: NSView, monitor: HeaderMonitorController?) {
         let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
         container.wantsLayer = true
@@ -221,22 +225,38 @@ enum UIHelpers {
         subtitleLabel.textColor = GrokTheme.textSecondary
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        var monitor: HeaderMonitorController?
         container.addSubview(accent)
         container.addSubview(titleLabel)
         container.addSubview(subtitleLabel)
 
-        NSLayoutConstraint.activate([
-            container.heightAnchor.constraint(equalToConstant: 52),
+        var constraints: [NSLayoutConstraint] = [
+            container.heightAnchor.constraint(equalToConstant: includeMonitor ? 58 : 52),
             accent.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             accent.topAnchor.constraint(equalTo: container.topAnchor),
             accent.bottomAnchor.constraint(equalTo: container.bottomAnchor),
             accent.widthAnchor.constraint(equalToConstant: 3),
             titleLabel.leadingAnchor.constraint(equalTo: accent.trailingAnchor, constant: 12),
-            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: 12),
+            titleLabel.topAnchor.constraint(equalTo: container.topAnchor, constant: includeMonitor ? 10 : 12),
             subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
-        ])
-        return container
+        ]
+
+        if includeMonitor {
+            let monitorController = HeaderMonitorController()
+            monitor = monitorController
+            container.addSubview(monitorController.container)
+            constraints += [
+                monitorController.container.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -14),
+                monitorController.container.topAnchor.constraint(equalTo: container.topAnchor),
+                monitorController.container.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+                monitorController.container.leadingAnchor.constraint(greaterThanOrEqualTo: titleLabel.trailingAnchor, constant: 16),
+                titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: monitorController.container.leadingAnchor, constant: -8),
+            ]
+        }
+
+        NSLayoutConstraint.activate(constraints)
+        return (container, monitor)
     }
 
     static func fieldLabel(_ text: String) -> NSTextField {

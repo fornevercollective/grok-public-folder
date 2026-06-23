@@ -121,7 +121,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let header = UIHelpers.headerView(title: promptTitle, subtitle: "Enter value")
+        let (header, _) = UIHelpers.headerView(title: promptTitle, subtitle: "Enter value")
         let field = NSTextField(string: promptDefault)
         UIHelpers.styleField(field)
 
@@ -175,7 +175,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
 
-        let header = UIHelpers.headerView(title: alertTitle, subtitle: GrokBrand.appName)
+        let (header, _) = UIHelpers.headerView(title: alertTitle, subtitle: GrokBrand.appName)
         let body = NSTextField(wrappingLabelWithString: alertMessage)
         body.font = GrokTypography.body
         body.textColor = GrokTheme.textSecondary

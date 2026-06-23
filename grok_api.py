@@ -114,6 +114,13 @@ def generate_video(
     destination = VIDEO_DIR / f"grok_{stamp()}.mp4"
     download_file(result["video"]["url"], destination)
     attach_sidecar(destination, "video", prompt, duration=duration, aspect_ratio=aspect_ratio, resolution=resolution)
+    try:
+        from grok_token_meter import estimate_tokens, record_usage
+
+        est = estimate_tokens(prompt) + int(duration) * 80
+        record_usage("video", prompt_tokens=est, completion_tokens=est * 3, estimated=True)
+    except Exception:
+        pass
     return destination
 
 
@@ -132,6 +139,13 @@ def generate_image(api_key: str, prompt: str, aspect_ratio: str = "16:9") -> Pat
     destination = IMAGE_DIR / f"grok_{stamp()}.png"
     download_file(result["data"][0]["url"], destination)
     attach_sidecar(destination, "image", prompt, model="grok-imagine-image-quality", aspect_ratio=aspect_ratio)
+    try:
+        from grok_token_meter import estimate_tokens, record_usage
+
+        est = estimate_tokens(prompt)
+        record_usage("image", prompt_tokens=est, completion_tokens=est * 2, estimated=True)
+    except Exception:
+        pass
     return destination
 
 
@@ -147,6 +161,12 @@ def chat(api_key: str, messages: list[dict]) -> str:
         },
         timeout=180,
     )
+    try:
+        from grok_token_meter import record_from_api_response
+
+        record_from_api_response("chat", result)
+    except Exception:
+        pass
     return result["choices"][0]["message"]["content"]
 
 

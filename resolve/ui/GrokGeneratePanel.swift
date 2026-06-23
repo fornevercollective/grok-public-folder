@@ -66,7 +66,7 @@ final class GeneratePanelController: NSObject, NSWindowDelegate {
 
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
-        let header = UIHelpers.headerView(title: "Generate Video", subtitle: GrokBrand.source)
+        let (header, _) = UIHelpers.headerView(title: "Generate Video", subtitle: GrokBrand.source)
 
         let leftPanel = buildLeftPanel()
         let rightPanel = buildRightPanel()
