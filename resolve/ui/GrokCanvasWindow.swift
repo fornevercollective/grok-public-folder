@@ -9,6 +9,7 @@ enum GrokTabs {
         ("scan", "Scan"),
         ("bootstrap", "Bootstrap"),
         ("bridge", "Bridge"),
+        ("terminal", "Terminal"),
         ("browser", "Browser"),
         ("imdb", "IMDb"),
         ("stream", "Stream"),
@@ -64,6 +65,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private let browserStatus = NSTextField(wrappingLabelWithString: "Safari handoff via browser/inbox.json and clipboard")
     private var imdbController: ImdbTabController?
     private var streamController: StreamTabController?
+    private var terminalController: TerminalTabController?
 
     init(catalog: GenerateCatalog) {
         self.catalog = catalog
@@ -177,6 +179,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     }
 
     private func switchTab(_ tabId: String) {
+        terminalController?.stopPolling()
         activeTab = tabId
         for (id, button) in tabButtons {
             button.isActive = id == tabId
@@ -189,6 +192,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         case "scan": panel = buildSimpleTab(title: "Scan Downloads", body: "Find Grok media in Downloads and offer to move into artifacts folders.", action: "Scan Downloads", tabId: "scan")
         case "bootstrap": panel = buildSimpleTab(title: "Bootstrap", body: "Create 4K bins, timeline settings, and grok_generated import target in the open Resolve project.", action: "Run Bootstrap", tabId: "bootstrap")
         case "bridge": panel = buildSimpleTab(title: "Bridge", body: "Open Terminal bridge for chat and headless generate requests from Resolve.", action: "Start Bridge", tabId: "bridge")
+        case "terminal": panel = buildTerminalTab()
         case "browser": panel = buildBrowserTab()
         case "imdb": panel = buildImdbTab()
         case "stream": panel = buildStreamTab()
@@ -355,6 +359,38 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         let controller = StreamTabController()
         streamController = controller
         return controller.buildView()
+    }
+
+    private func buildTerminalTab() -> NSView {
+        let controller = TerminalTabController()
+        controller.onStartBridge = { [weak self] in self?.startBridgeInBackground() }
+        controller.onOpenTerminal = { [weak self] in self?.openGrokConsoleTerminal() }
+        terminalController = controller
+        let view = controller.buildView()
+        controller.startPolling()
+        return view
+    }
+
+    private func startBridgeInBackground() {
+        let bridge = GrokPaths.binDir.appendingPathComponent("bridge")
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/bash")
+        task.arguments = [
+            "-lc",
+            "export GROK_PUBLIC_FOLDER='\(GrokPaths.root.path)'; "
+                + "export XAI_API_KEY=\"${XAI_API_KEY:-}\"; "
+                + "'\(bridge.path)' >> '\(GrokPaths.bridgeDir.path)/menu-last.log' 2>&1 &",
+        ]
+        try? task.run()
+    }
+
+    private func openGrokConsoleTerminal() {
+        let launcher = GrokPaths.binDir.appendingPathComponent("grok-terminal")
+        let grok = GrokPaths.binDir.appendingPathComponent("grok")
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/bash")
+        task.arguments = [launcher.path, grok.path, "Grok Console"]
+        try? task.run()
     }
 
     @objc private func scanImportPressed() {

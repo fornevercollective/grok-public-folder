@@ -309,6 +309,15 @@ enum UIHelpers {
         scroll.reflectScrolledClipView(scroll.contentView)
     }
 
+    static func scrollMetaToEnd(_ view: NSTextView) {
+        if let container = view.textContainer {
+            view.layoutManager?.ensureLayout(for: container)
+        }
+        let length = view.string.count
+        guard length > 0 else { return }
+        view.scrollRangeToVisible(NSRange(location: length - 1, length: 1))
+    }
+
     static func flatButton(_ title: String, accent: Bool, target: AnyObject?, action: Selector?) -> NSButton {
         let button = NSButton(title: title, target: target, action: action)
         button.bezelStyle = .inline
