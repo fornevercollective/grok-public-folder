@@ -9,25 +9,25 @@ enum GrokBrand {
     static let trustLine = "Official Grok workflow · local scripts · x.ai API (your key)"
 }
 
-/// Resolve-inspired dark palette (Edit / Color / Fairlight inspector feel).
+/// DaVinci Resolve cool blue-grey palette (Edit / Color inspector).
 enum GrokTheme {
-    static let window = rgb(0.145, 0.145, 0.145)       // #252525
-    static let header = rgb(0.118, 0.118, 0.118)       // #1e1e1e
-    static let panel = rgb(0.165, 0.165, 0.165)        // #2a2a2a
-    static let row = rgb(0.192, 0.192, 0.192)          // #313131
-    static let rowHover = rgb(0.235, 0.235, 0.235)     // #3c3c3c
-    static let rowActive = rgb(0.255, 0.255, 0.255)    // #414141
-    static let border = rgb(0.345, 0.345, 0.345)       // #585858
-    static let borderSubtle = rgb(0.275, 0.275, 0.275) // #464646
-    static let field = rgb(0.110, 0.110, 0.110)        // #1c1c1c
-    static let fieldInset = rgb(0.135, 0.135, 0.135)   // #232323 — meta / log wells
-    static let text = rgb(0.945, 0.945, 0.945)         // #f1f1f1 primary
-    static let textSecondary = rgb(0.780, 0.780, 0.780) // #c7c7c7 body
-    static let label = rgb(0.710, 0.710, 0.710)        // #b5b5b5 section labels
-    static let muted = textSecondary                   // legacy alias — was too dim at 0.55
-    static let textDim = rgb(0.600, 0.600, 0.600)      // #999999 footnotes only
-    static let accent = rgb(0.976, 0.545, 0.078)       // #f98b14 Resolve orange
-    static let accentText = rgb(0.08, 0.08, 0.08)
+    static let window = rgb(0.106, 0.114, 0.125)       // #1b1d20
+    static let header = rgb(0.090, 0.098, 0.110)       // #17191c
+    static let panel = rgb(0.145, 0.153, 0.169)        // #25272b
+    static let row = rgb(0.176, 0.184, 0.200)          // #2d2f33
+    static let rowHover = rgb(0.208, 0.216, 0.231)     // #35373b
+    static let rowActive = rgb(0.231, 0.239, 0.255)    // #3b3d41
+    static let border = rgb(0.290, 0.302, 0.325)       // #4a4d53
+    static let borderSubtle = rgb(0.235, 0.245, 0.265) // #3c3e43
+    static let field = rgb(0.082, 0.090, 0.102)        // #15171a
+    static let fieldInset = rgb(0.110, 0.118, 0.133)   // #1c1e22
+    static let text = rgb(0.910, 0.918, 0.931)         // #e8eaed
+    static let textSecondary = rgb(0.753, 0.765, 0.784) // #c0c3c8
+    static let label = rgb(0.682, 0.698, 0.722)        // #aeb2b8
+    static let muted = textSecondary
+    static let textDim = rgb(0.541, 0.557, 0.580)      // #8a8e94
+    static let accent = rgb(0.976, 0.545, 0.078)       // #f98b14
+    static let accentText = rgb(0.06, 0.07, 0.09)
 
     private static func rgb(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) -> NSColor {
         NSColor(calibratedRed: r, green: g, blue: b, alpha: 1)
@@ -279,7 +279,34 @@ enum UIHelpers {
         scroll.drawsBackground = true
         scroll.backgroundColor = GrokTheme.fieldInset
         scroll.borderType = .lineBorder
+        scroll.scrollerStyle = .overlay
         scroll.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    static func configureMetaTextView(_ view: NSTextView, in scroll: NSScrollView) {
+        view.isEditable = false
+        view.isSelectable = true
+        view.drawsBackground = true
+        view.backgroundColor = GrokTheme.fieldInset
+        view.textColor = GrokTheme.textSecondary
+        view.font = GrokTypography.meta
+        view.textContainerInset = NSSize(width: 8, height: 8)
+        view.isRichText = false
+        view.isVerticallyResizable = true
+        view.isHorizontallyResizable = false
+        view.autoresizingMask = [.width]
+        view.textContainer?.widthTracksTextView = true
+        view.textContainer?.containerSize = NSSize(width: scroll.contentSize.width, height: CGFloat.greatestFiniteMagnitude)
+        view.minSize = NSSize(width: 0, height: 0)
+        view.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+    }
+
+    static func scrollMetaToTop(_ view: NSTextView, in scroll: NSScrollView) {
+        if let container = view.textContainer {
+            view.layoutManager?.ensureLayout(for: container)
+        }
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: 0))
+        scroll.reflectScrolledClipView(scroll.contentView)
     }
 
     static func flatButton(_ title: String, accent: Bool, target: AnyObject?, action: Selector?) -> NSButton {
@@ -305,8 +332,7 @@ enum UIHelpers {
         let size = NSSize(width: 320, height: 180)
         let image = NSImage(size: size)
         image.lockFocus()
-        let hue = CGFloat(abs(preset.slug.hashValue % 255)) / 255.0
-        NSColor(calibratedHue: hue * 0.08 + 0.02, saturation: 0.35, brightness: 0.22, alpha: 1).setFill()
+        GrokTheme.fieldInset.setFill()
         NSRect(origin: .zero, size: size).fill()
         GrokTheme.border.setStroke()
         NSBezierPath(rect: NSRect(x: 0.5, y: 0.5, width: size.width - 1, height: size.height - 1)).stroke()
@@ -384,6 +410,8 @@ enum UIHelpers {
         view.font = GrokTypography.meta
         view.textContainerInset = NSSize(width: 8, height: 8)
         view.isRichText = false
+        view.isVerticallyResizable = true
+        view.isHorizontallyResizable = false
         return view
     }
 

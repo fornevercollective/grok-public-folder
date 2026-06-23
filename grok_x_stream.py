@@ -69,12 +69,12 @@ def _write_overlay(title: str, subtitle: str, status: str) -> None:
   body {{ margin:0; background:transparent; font-family:-apple-system,system-ui,sans-serif; }}
   .card {{
     display:inline-block; padding:14px 18px; border-radius:6px;
-    background:rgba(20,20,20,0.82); border:1px solid #585858;
-    color:#f1f1f1; min-width:320px;
+    background:rgba(27,29,32,0.88); border:1px solid #4a4d53;
+    color:#e8eaed; min-width:320px;
   }}
   .title {{ font-size:18px; font-weight:600; color:#f98b14; }}
-  .sub {{ font-size:12px; color:#c7c7c7; margin-top:4px; }}
-  .status {{ font-size:11px; color:#b5b5b5; margin-top:8px; text-transform:uppercase; letter-spacing:.04em; }}
+  .sub {{ font-size:12px; color:#c0c3c8; margin-top:4px; }}
+  .status {{ font-size:11px; color:#aeb2b8; margin-top:8px; text-transform:uppercase; letter-spacing:.04em; }}
 </style></head><body>
 <div class="card">
   <div class="title">{title}</div>

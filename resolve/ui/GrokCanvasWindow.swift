@@ -91,7 +91,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
 
     private func makeWindow() -> NSWindow {
         let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
-        let size = NSSize(width: 1180, height: 740)
+        let size = NSSize(width: 1200, height: 780)
         let origin = NSPoint(x: screen.midX - size.width / 2, y: screen.midY - size.height / 2)
         let window = NSWindow(
             contentRect: NSRect(origin: origin, size: size),
@@ -385,7 +385,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         split.spacing = 10
         split.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 8, right: 12)
         split.translatesAutoresizingMaskIntoConstraints = false
-        left.widthAnchor.constraint(equalToConstant: 300).isActive = true
+        left.widthAnchor.constraint(equalToConstant: 330).isActive = true
         right.widthAnchor.constraint(equalToConstant: 240).isActive = true
         panel.addSubview(split)
         NSLayoutConstraint.activate([
@@ -421,10 +421,10 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         mediaLabel.maximumNumberOfLines = 2
 
         metaScroll.hasVerticalScroller = true
+        metaScroll.autohidesScrollers = false
         UIHelpers.styleScrollView(metaScroll)
         metaScroll.documentView = metaView
-        metaView.translatesAutoresizingMaskIntoConstraints = false
-        metaView.widthAnchor.constraint(equalTo: metaScroll.contentView.widthAnchor).isActive = true
+        UIHelpers.configureMetaTextView(metaView, in: metaScroll)
 
         let metaLabel = UIHelpers.fieldLabel("Content meta")
 
@@ -467,7 +467,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             mediaView.topAnchor.constraint(equalTo: viewerModeControl.bottomAnchor, constant: 6),
             mediaView.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 10),
             mediaView.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -10),
-            mediaView.heightAnchor.constraint(equalToConstant: 160),
+            mediaView.heightAnchor.constraint(equalToConstant: 130),
             playerHost.topAnchor.constraint(equalTo: mediaView.topAnchor),
             playerHost.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
             playerHost.trailingAnchor.constraint(equalTo: mediaView.trailingAnchor),
@@ -480,12 +480,12 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             metaScroll.topAnchor.constraint(equalTo: metaLabel.bottomAnchor, constant: 4),
             metaScroll.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
             metaScroll.trailingAnchor.constraint(equalTo: mediaView.trailingAnchor),
-            metaScroll.heightAnchor.constraint(equalToConstant: 88),
-            btnRow.topAnchor.constraint(equalTo: metaScroll.bottomAnchor, constant: 8),
+            metaScroll.bottomAnchor.constraint(equalTo: btnRow.topAnchor, constant: -8),
+            metaScroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 110),
             btnRow.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
-            stripLabel.topAnchor.constraint(equalTo: btnRow.bottomAnchor, constant: 8),
+            btnRow.bottomAnchor.constraint(equalTo: stripLabel.topAnchor, constant: -8),
             stripLabel.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
-            stripScroll.topAnchor.constraint(equalTo: stripLabel.bottomAnchor, constant: 4),
+            stripLabel.bottomAnchor.constraint(equalTo: stripScroll.topAnchor, constant: -4),
             stripScroll.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
             stripScroll.trailingAnchor.constraint(equalTo: mediaView.trailingAnchor),
             stripScroll.bottomAnchor.constraint(equalTo: panel.bottomAnchor, constant: -10),
@@ -509,10 +509,10 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         lutPreviewView.layer?.cornerRadius = 3
 
         lutMetaScroll.hasVerticalScroller = true
+        lutMetaScroll.autohidesScrollers = false
         UIHelpers.styleScrollView(lutMetaScroll)
         lutMetaScroll.documentView = lutMetaView
-        lutMetaView.translatesAutoresizingMaskIntoConstraints = false
-        lutMetaView.widthAnchor.constraint(equalTo: lutMetaScroll.contentView.widthAnchor).isActive = true
+        UIHelpers.configureMetaTextView(lutMetaView, in: lutMetaScroll)
 
         panel.addSubview(lutTitle)
         panel.addSubview(lutPreviewView)
@@ -705,6 +705,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         UIHelpers.loadThumbnail(for: preset, into: mediaView)
         mediaLabel.stringValue = "Preset · \(preset.display)"
         metaView.string = MediaLibrary.metaLines(for: preset).joined(separator: "\n")
+        UIHelpers.scrollMetaToTop(metaView, in: metaScroll)
     }
 
     private func updateMetaPanel() {
@@ -718,6 +719,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
                 metaView.string = MediaLibrary.metaLines(for: preset).joined(separator: "\n")
             }
         }
+        UIHelpers.scrollMetaToTop(metaView, in: metaScroll)
     }
 
     private func updateLutViewer() {
@@ -730,6 +732,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         lutTitle.stringValue = lut.display.uppercased()
         UIHelpers.loadThumbnail(for: lut, into: lutPreviewView)
         lutMetaView.string = MediaLibrary.metaLines(for: lut).joined(separator: "\n")
+        UIHelpers.scrollMetaToTop(lutMetaView, in: lutMetaScroll)
     }
 
     @objc private func loadPressed() {
