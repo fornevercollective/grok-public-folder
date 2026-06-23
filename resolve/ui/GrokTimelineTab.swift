@@ -72,12 +72,16 @@ struct TimelineListResponse: Codable {
     let timelineCount: Int?
     let currentTimeline: String?
     let timelines: [TimelineListEntry]?
+    let source: String?
+    let note: String?
+    let scannedAt: String?
 
     enum CodingKeys: String, CodingKey {
-        case ok, error, timelines
+        case ok, error, timelines, source, note
         case projectName = "project_name"
         case timelineCount = "timeline_count"
         case currentTimeline = "current_timeline"
+        case scannedAt = "scanned_at"
     }
 }
 
@@ -178,6 +182,7 @@ final class TimelineTabController: NSObject {
 
         projectLabel.font = GrokTypography.caption
         projectLabel.textColor = GrokTheme.textDim
+        projectLabel.maximumNumberOfLines = 3
         projectLabel.translatesAutoresizingMaskIntoConstraints = false
 
         UIHelpers.stylePopup(timelinePopup)
@@ -353,14 +358,22 @@ final class TimelineTabController: NSObject {
                     self.reloadTimelinePopup(response)
                     let proj = response.projectName ?? "Project"
                     let count = response.timelineCount ?? 0
-                    self.projectLabel.stringValue = "\(proj) · \(count) timeline(s)"
+                    var label = "\(proj) · \(count) timeline(s)"
+                    if response.source == "resolve_lua" {
+                        label += " · via Resolve script"
+                    }
+                    if let note = response.note, !note.isEmpty {
+                        label += "\n\(note)"
+                    }
+                    self.projectLabel.stringValue = label
                     if self.statusLabel.stringValue.hasPrefix("No scan yet") {
                         self.statusLabel.stringValue = "Select a timeline and Scan Selected"
                     }
                 } else {
                     self.timelinePopup.removeAllItems()
-                    self.timelinePopup.addItem(withTitle: "(Resolve not connected — Load Timelines)")
-                    self.projectLabel.stringValue = response?.error ?? "Open a Resolve project, then Load Timelines"
+                    self.timelinePopup.addItem(withTitle: "(no timelines — reopen Grok from Scripts)")
+                    self.projectLabel.stringValue = response?.error
+                        ?? "Open a Resolve project, then Workspace → Scripts → Grok"
                 }
             }
         }

@@ -14,6 +14,7 @@ from grok_paths import BRIDGE_DIR, IMAGE_DIR, PROJECT_DIR, ROOT, VIDEO_DIR
 
 SCAN_FILE = PROJECT_DIR / "timeline-grok-clips.json"
 SCAN_REQUEST_FILE = PROJECT_DIR / "timeline-scan-request.json"
+TIMELINE_LIST_FILE = PROJECT_DIR / "timeline-list.json"
 BATCH_FILE = BRIDGE_DIR / "timeline-batch.json"
 MEDIA_DIRS = (VIDEO_DIR, IMAGE_DIR)
 
@@ -96,10 +97,38 @@ def _timeline_duration_label(timeline) -> str | None:
     return None
 
 
+def _list_from_cached_timelines() -> dict | None:
+    cached = _read_json(TIMELINE_LIST_FILE)
+    if not cached or not isinstance(cached.get("timelines"), list) or not cached["timelines"]:
+        return None
+    return {
+        "ok": True,
+        "project_name": cached.get("project_name", ""),
+        "timeline_count": len(cached["timelines"]),
+        "current_timeline": cached.get("current_timeline"),
+        "timelines": cached["timelines"],
+        "source": cached.get("source", "resolve_lua"),
+        "scanned_at": cached.get("scanned_at"),
+        "note": (
+            "Timeline list from Resolve Grok script — external Python scripting "
+            "is unavailable (normal on Resolve Free)."
+        ),
+    }
+
+
 def list_project_timelines() -> dict:
     project, err = _get_resolve_project()
-    if err:
-        return err
+    if project is None:
+        cached = _list_from_cached_timelines()
+        if cached:
+            return cached
+        return {
+            "ok": False,
+            "error": (
+                "No timeline list yet. Close Grok and open Workspace → Scripts → Grok "
+                "again with a Resolve project open."
+            ),
+        }
 
     current = project.GetCurrentTimeline()
     current_name = current.GetName() if current else None
@@ -136,6 +165,7 @@ def list_project_timelines() -> dict:
         "timeline_count": len(timelines),
         "current_timeline": current_name,
         "timelines": timelines,
+        "source": "python",
     }
 
 

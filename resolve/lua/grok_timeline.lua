@@ -10,6 +10,7 @@ end
 dofile(GROK_ROOT .. "/resolve/lua/grok_resolve.lua")
 
 local SCAN_FILE = GROK_PROJECT .. "/timeline-grok-clips.json"
+local TIMELINE_LIST_FILE = GROK_PROJECT .. "/timeline-list.json"
 local MEDIA_EXT = {
     [".mp4"] = true, [".mov"] = true, [".m4v"] = true, [".webm"] = true,
     [".png"] = true, [".jpg"] = true, [".jpeg"] = true, [".webp"] = true, [".gif"] = true,
@@ -125,40 +126,79 @@ local function resolve_timeline(project, timeline_index)
     return tl, nil
 end
 
-function grok_list_timelines()
+function grok_write_timeline_list()
     local resolve = grok_get_resolve()
     if not resolve then
-        print("resolve not connected")
-        return nil
+        print("timeline list: resolve not connected")
+        return false
     end
     local project = resolve:GetProjectManager():GetCurrentProject()
     if not project then
-        print("open a project first")
-        return nil
+        print("timeline list: open a project first")
+        return false
     end
+
     local current = safe_call(function() return project:GetCurrentTimeline() end, nil)
     local current_name = current and safe_call(function() return current:GetName() end, "") or ""
     local count = safe_call(function() return project:GetTimelineCount() end, 0) or 0
-    print('{"ok":true,"project_name":' .. json_escape(project:GetName() or "Project") .. ',"timeline_count":' .. count .. ',"timelines":[')
+    local project_name = safe_call(function() return project:GetName() end, "Project") or "Project"
+    local stamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+
+    local entries = {}
     for idx = 1, count do
         local tl = safe_call(function() return project:GetTimelineByIndex(idx) end, nil)
         if tl then
             local name = safe_call(function() return tl:GetName() end, "") or ("Timeline " .. idx)
             local is_current = (current_name ~= "" and name == current_name)
-            local suffix = idx < count and "," or ""
-            print(
-                '{"index":' ..
-                    idx ..
-                    ',"name":' ..
-                    json_escape(name) ..
-                    ',"is_current":' ..
-                    (is_current and "true" or "false") ..
-                    "}" .. suffix
-            )
+            local sf = item_frame(tl, "GetStartFrame", 0)
+            local ef = item_frame(tl, "GetEndFrame", 0)
+            local dur = nil
+            if ef > sf then
+                dur = (ef - sf) .. " fr"
+            end
+            table.insert(entries, {
+                index = idx,
+                name = name,
+                is_current = is_current,
+                duration_label = dur,
+            })
         end
     end
-    print("]}")
-    return count
+
+    local file = io.open(TIMELINE_LIST_FILE, "w")
+    if not file then
+        print("timeline list: could not write " .. TIMELINE_LIST_FILE)
+        return false
+    end
+
+    file:write("{\n")
+    file:write('  "ok": true,\n')
+    file:write('  "scanned_at": ' .. json_escape(stamp) .. ",\n")
+    file:write('  "project_name": ' .. json_escape(project_name) .. ",\n")
+    file:write('  "current_timeline": ' .. json_escape(current_name) .. ",\n")
+    file:write('  "timeline_count": ' .. #entries .. ",\n")
+    file:write('  "source": "resolve_lua",\n')
+    file:write('  "timelines": [\n')
+    for i, row in ipairs(entries) do
+        file:write("    {\n")
+        file:write('      "index": ' .. row.index .. ",\n")
+        file:write('      "name": ' .. json_escape(row.name) .. ",\n")
+        file:write('      "is_current": ' .. (row.is_current and "true" or "false") .. ",\n")
+        if row.duration_label then
+            file:write('      "duration_label": ' .. json_escape(row.duration_label) .. "\n")
+        else
+            file:write('      "duration_label": null\n')
+        end
+        file:write("    }")
+        if i < #entries then
+            file:write(",")
+        end
+        file:write("\n")
+    end
+    file:write("  ]\n}\n")
+    file:close()
+    print("timeline list: wrote " .. #entries .. " timeline(s) to " .. TIMELINE_LIST_FILE)
+    return true
 end
 
 function grok_scan_timeline(timeline_index)

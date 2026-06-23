@@ -206,6 +206,7 @@ local function handle_menu_output(output)
             alert("Grok", "Timeline scan failed:\n" .. tostring(count))
             notify("Timeline scan failed — see Resolve console")
         else
+            pcall(grok_write_timeline_list)
             notify("Timeline scan: " .. tostring(count) .. " Grok clip(s) — reopen Grok to view")
             print("timeline scan done: " .. tostring(count) .. " clip(s)")
         end
@@ -223,5 +224,8 @@ local function handle_menu_output(output)
         print("grok menu cancelled")
     end
 end
+
+dofile(GROK_ROOT .. "/resolve/lua/grok_timeline.lua")
+pcall(grok_write_timeline_list)
 
 handle_menu_output(run_menu_ui("choose"))
