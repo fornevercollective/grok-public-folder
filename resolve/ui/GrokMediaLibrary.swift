@@ -159,8 +159,8 @@ enum MediaLibrary {
         NSRect(origin: .zero, size: size).fill()
         let label = (item.kind == "video" ? "▶ " : "◻ ") + item.name as NSString
         let attrs: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 10, weight: .medium),
-            .foregroundColor: GrokTheme.muted,
+            .font: GrokTypography.caption,
+            .foregroundColor: GrokTheme.textSecondary,
         ]
         let textSize = label.size(withAttributes: attrs)
         label.draw(

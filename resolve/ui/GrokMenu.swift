@@ -92,7 +92,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
-        window.backgroundColor = GrokTheme.window
+        UIHelpers.applyResolveAppearance(to: window)
         window.isReleasedWhenClosed = false
         return window
     }
@@ -176,8 +176,8 @@ final class GrokApp: NSObject, NSApplicationDelegate {
 
         let header = UIHelpers.headerView(title: alertTitle, subtitle: GrokBrand.appName)
         let body = NSTextField(wrappingLabelWithString: alertMessage)
-        body.font = NSFont.systemFont(ofSize: 12)
-        body.textColor = GrokTheme.text
+        body.font = GrokTypography.body
+        body.textColor = GrokTheme.textSecondary
         body.translatesAutoresizingMaskIntoConstraints = false
 
         let ok = UIHelpers.flatButton("OK", accent: true, target: self, action: #selector(alertOK))
@@ -244,11 +244,13 @@ final class ResolveActionButton: NSButton {
         self.bezelStyle = .inline
         self.isBordered = false
         self.alignment = .left
-        self.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        self.font = GrokTypography.bodyStrong
         self.contentTintColor = GrokTheme.text
         self.wantsLayer = true
         self.layer?.backgroundColor = GrokTheme.row.cgColor
-        self.layer?.cornerRadius = 3
+        self.layer?.cornerRadius = 2
+        self.layer?.borderColor = GrokTheme.borderSubtle.cgColor
+        self.layer?.borderWidth = 1
         self.translatesAutoresizingMaskIntoConstraints = false
         self.heightAnchor.constraint(equalToConstant: 34).isActive = true
 

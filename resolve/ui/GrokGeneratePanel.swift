@@ -62,7 +62,7 @@ final class GeneratePanelController: NSObject, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.minSize = NSSize(width: 820, height: 560)
-        window.backgroundColor = GrokTheme.window
+        UIHelpers.applyResolveAppearance(to: window)
 
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
@@ -131,14 +131,14 @@ final class GeneratePanelController: NSObject, NSWindowDelegate {
         presetTitle.textColor = GrokTheme.text
         presetTitle.translatesAutoresizingMaskIntoConstraints = false
 
-        presetMeta.font = NSFont.systemFont(ofSize: 10)
-        presetMeta.textColor = GrokTheme.muted
+        presetMeta.font = GrokTypography.caption
+        presetMeta.textColor = GrokTheme.textSecondary
         presetMeta.maximumNumberOfLines = 2
         presetMeta.translatesAutoresizingMaskIntoConstraints = false
 
         let previewLabel = UIHelpers.fieldLabel("Preset prompt")
-        promptPreview.font = NSFont.systemFont(ofSize: 10)
-        promptPreview.textColor = GrokTheme.text
+        promptPreview.font = GrokTypography.caption
+        promptPreview.textColor = GrokTheme.textSecondary
         promptPreview.maximumNumberOfLines = 0
         promptPreview.translatesAutoresizingMaskIntoConstraints = false
 

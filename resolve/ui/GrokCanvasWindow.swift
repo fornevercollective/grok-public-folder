@@ -99,7 +99,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.minSize = NSSize(width: 980, height: 640)
-        window.backgroundColor = GrokTheme.window
+        UIHelpers.applyResolveAppearance(to: window)
 
         let root = NSView()
         root.translatesAutoresizingMaskIntoConstraints = false
@@ -203,13 +203,9 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private func buildSimpleTab(title: String, body: String, action: String, tabId: String) -> NSView {
         let panel = NSView()
         let heading = NSTextField(labelWithString: title)
-        heading.font = NSFont.systemFont(ofSize: 18, weight: .semibold)
-        heading.textColor = GrokTheme.text
-        heading.translatesAutoresizingMaskIntoConstraints = false
+        UIHelpers.styleSectionHeading(heading)
         let text = NSTextField(wrappingLabelWithString: body)
-        text.font = NSFont.systemFont(ofSize: 12)
-        text.textColor = GrokTheme.muted
-        text.translatesAutoresizingMaskIntoConstraints = false
+        UIHelpers.styleBodyText(text)
         let button = UIHelpers.flatButton(action, accent: true, target: self, action: #selector(simpleActionPressed(_:)))
         button.identifier = NSUserInterfaceItemIdentifier(tabId)
         panel.addSubview(heading)
@@ -235,13 +231,9 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private func buildImportTab() -> NSView {
         let panel = NSView()
         let heading = NSTextField(labelWithString: "Import")
-        heading.font = NSFont.systemFont(ofSize: 18, weight: .semibold)
-        heading.textColor = GrokTheme.text
-        heading.translatesAutoresizingMaskIntoConstraints = false
+        UIHelpers.styleSectionHeading(heading)
         let text = NSTextField(wrappingLabelWithString: "Import clips from video/ and image/ into the active Resolve media pool bin.")
-        text.font = NSFont.systemFont(ofSize: 12)
-        text.textColor = GrokTheme.muted
-        text.translatesAutoresizingMaskIntoConstraints = false
+        UIHelpers.styleBodyText(text)
         let importBtn = UIHelpers.flatButton("Import to Resolve", accent: true, target: self, action: #selector(simpleActionPressed(_:)))
         importBtn.identifier = NSUserInterfaceItemIdentifier("import")
         let scanImportBtn = UIHelpers.flatButton("Scan + Import", accent: false, target: self, action: #selector(scanImportPressed))
@@ -267,20 +259,16 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private func buildBrowserTab() -> NSView {
         let panel = NSView()
         let heading = NSTextField(labelWithString: "Grok Browser (Safari)")
-        heading.font = NSFont.systemFont(ofSize: 18, weight: .semibold)
-        heading.textColor = GrokTheme.text
-        heading.translatesAutoresizingMaskIntoConstraints = false
+        UIHelpers.styleSectionHeading(heading)
 
         let text = NSTextField(wrappingLabelWithString:
             "Talk between grok.com/imagine in Safari and this Resolve workflow. " +
             "Pull reads browser/inbox.json or clipboard; Push writes browser/outbox.json and copies your prompt."
         )
-        text.font = NSFont.systemFont(ofSize: 12)
-        text.textColor = GrokTheme.muted
-        text.translatesAutoresizingMaskIntoConstraints = false
+        UIHelpers.styleBodyText(text)
 
-        browserStatus.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
-        browserStatus.textColor = GrokTheme.muted
+        browserStatus.font = GrokTypography.meta
+        browserStatus.textColor = GrokTheme.textSecondary
         browserStatus.translatesAutoresizingMaskIntoConstraints = false
 
         let openBtn = UIHelpers.flatButton("Open Safari (Imagine)", accent: true, target: self, action: #selector(browserOpenPressed))
@@ -398,7 +386,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         viewerModeControl.selectedSegment = 0
         viewerModeControl.target = self
         viewerModeControl.action = #selector(viewerModeChanged)
-        viewerModeControl.translatesAutoresizingMaskIntoConstraints = false
+        UIHelpers.styleSegmentedControl(viewerModeControl)
 
         mediaView.translatesAutoresizingMaskIntoConstraints = false
         mediaView.imageScaling = .scaleProportionallyUpOrDown
@@ -409,14 +397,11 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         playerHost.translatesAutoresizingMaskIntoConstraints = false
         playerHost.isHidden = true
 
-        mediaLabel.font = NSFont.systemFont(ofSize: 10)
-        mediaLabel.textColor = GrokTheme.muted
+        UIHelpers.styleCaption(mediaLabel)
         mediaLabel.maximumNumberOfLines = 2
-        mediaLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        metaScroll.translatesAutoresizingMaskIntoConstraints = false
         metaScroll.hasVerticalScroller = true
-        metaScroll.borderType = .bezelBorder
+        UIHelpers.styleScrollView(metaScroll)
         metaScroll.documentView = metaView
         metaView.translatesAutoresizingMaskIntoConstraints = false
         metaView.widthAnchor.constraint(equalTo: metaScroll.contentView.widthAnchor).isActive = true
@@ -492,8 +477,8 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private func buildLutPanel() -> NSView {
         let panel = UIHelpers.panelShell()
 
-        lutTitle.font = NSFont.systemFont(ofSize: 10, weight: .semibold)
-        lutTitle.textColor = GrokTheme.muted
+        lutTitle.font = GrokTypography.label
+        lutTitle.textColor = GrokTheme.label
         lutTitle.stringValue = "LUT VIEWER"
         lutTitle.translatesAutoresizingMaskIntoConstraints = false
 
@@ -503,9 +488,8 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         lutPreviewView.layer?.backgroundColor = GrokTheme.field.cgColor
         lutPreviewView.layer?.cornerRadius = 3
 
-        lutMetaScroll.translatesAutoresizingMaskIntoConstraints = false
         lutMetaScroll.hasVerticalScroller = true
-        lutMetaScroll.borderType = .bezelBorder
+        UIHelpers.styleScrollView(lutMetaScroll)
         lutMetaScroll.documentView = lutMetaView
         lutMetaView.translatesAutoresizingMaskIntoConstraints = false
         lutMetaView.widthAnchor.constraint(equalTo: lutMetaScroll.contentView.widthAnchor).isActive = true
@@ -544,18 +528,17 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
 
         let promptLabel = UIHelpers.fieldLabel("Prompt")
         let promptScroll = NSScrollView()
-        promptScroll.translatesAutoresizingMaskIntoConstraints = false
         promptScroll.hasVerticalScroller = true
-        promptScroll.borderType = .bezelBorder
-        promptView.font = NSFont.systemFont(ofSize: 13)
+        UIHelpers.styleScrollView(promptScroll)
+        promptView.font = GrokTypography.body
         promptView.textColor = GrokTheme.text
         promptView.backgroundColor = GrokTheme.field
         promptView.isRichText = false
         promptView.textContainerInset = NSSize(width: 8, height: 8)
         promptScroll.documentView = promptView
 
-        presetPreview.font = NSFont.systemFont(ofSize: 10)
-        presetPreview.textColor = GrokTheme.muted
+        presetPreview.font = GrokTypography.caption
+        presetPreview.textColor = GrokTheme.textSecondary
         presetPreview.maximumNumberOfLines = 0
         presetPreview.translatesAutoresizingMaskIntoConstraints = false
 
@@ -911,7 +894,7 @@ final class TabButton: NSButton {
         bezelStyle = .inline
         isBordered = false
         wantsLayer = true
-        font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        font = GrokTypography.tab
         translatesAutoresizingMaskIntoConstraints = false
         heightAnchor.constraint(equalToConstant: 30).isActive = true
         widthAnchor.constraint(greaterThanOrEqualToConstant: 72).isActive = true
@@ -921,9 +904,12 @@ final class TabButton: NSButton {
     required init?(coder: NSCoder) { nil }
 
     private func refresh() {
-        layer?.backgroundColor = (isActive ? GrokTheme.rowHover : GrokTheme.row).cgColor
-        layer?.cornerRadius = 3
-        contentTintColor = isActive ? GrokTheme.accent : GrokTheme.text
+        layer?.backgroundColor = (isActive ? GrokTheme.rowActive : GrokTheme.row).cgColor
+        layer?.cornerRadius = 2
+        layer?.borderWidth = isActive ? 1 : 0
+        layer?.borderColor = (isActive ? GrokTheme.accent : GrokTheme.borderSubtle).cgColor
+        contentTintColor = isActive ? GrokTheme.text : GrokTheme.textSecondary
+        font = NSFont.systemFont(ofSize: 11, weight: isActive ? .semibold : .medium)
     }
 }
 

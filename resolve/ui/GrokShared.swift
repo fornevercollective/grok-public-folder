@@ -9,17 +9,39 @@ enum GrokBrand {
     static let trustLine = "Official Grok workflow · local scripts · x.ai API (your key)"
 }
 
+/// Resolve-inspired dark palette (Edit / Color / Fairlight inspector feel).
 enum GrokTheme {
-    static let window = NSColor(calibratedRed: 0.137, green: 0.137, blue: 0.137, alpha: 1)
-    static let header = NSColor(calibratedRed: 0.102, green: 0.102, blue: 0.102, alpha: 1)
-    static let panel = NSColor(calibratedRed: 0.176, green: 0.176, blue: 0.176, alpha: 1)
-    static let row = NSColor(calibratedRed: 0.208, green: 0.208, blue: 0.208, alpha: 1)
-    static let rowHover = NSColor(calibratedRed: 0.255, green: 0.255, blue: 0.255, alpha: 1)
-    static let border = NSColor(calibratedRed: 0.24, green: 0.24, blue: 0.24, alpha: 1)
-    static let field = NSColor(calibratedRed: 0.118, green: 0.118, blue: 0.118, alpha: 1)
-    static let text = NSColor(calibratedRed: 0.91, green: 0.91, blue: 0.91, alpha: 1)
-    static let muted = NSColor(calibratedRed: 0.55, green: 0.55, blue: 0.55, alpha: 1)
-    static let accent = NSColor(calibratedRed: 1.0, green: 0.467, blue: 0.0, alpha: 1)
+    static let window = rgb(0.145, 0.145, 0.145)       // #252525
+    static let header = rgb(0.118, 0.118, 0.118)       // #1e1e1e
+    static let panel = rgb(0.165, 0.165, 0.165)        // #2a2a2a
+    static let row = rgb(0.192, 0.192, 0.192)          // #313131
+    static let rowHover = rgb(0.235, 0.235, 0.235)     // #3c3c3c
+    static let rowActive = rgb(0.255, 0.255, 0.255)    // #414141
+    static let border = rgb(0.345, 0.345, 0.345)       // #585858
+    static let borderSubtle = rgb(0.275, 0.275, 0.275) // #464646
+    static let field = rgb(0.110, 0.110, 0.110)        // #1c1c1c
+    static let fieldInset = rgb(0.135, 0.135, 0.135)   // #232323 — meta / log wells
+    static let text = rgb(0.945, 0.945, 0.945)         // #f1f1f1 primary
+    static let textSecondary = rgb(0.780, 0.780, 0.780) // #c7c7c7 body
+    static let label = rgb(0.710, 0.710, 0.710)        // #b5b5b5 section labels
+    static let muted = textSecondary                   // legacy alias — was too dim at 0.55
+    static let textDim = rgb(0.600, 0.600, 0.600)      // #999999 footnotes only
+    static let accent = rgb(0.976, 0.545, 0.078)       // #f98b14 Resolve orange
+    static let accentText = rgb(0.08, 0.08, 0.08)
+
+    private static func rgb(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) -> NSColor {
+        NSColor(calibratedRed: r, green: g, blue: b, alpha: 1)
+    }
+}
+
+enum GrokTypography {
+    static let heading = NSFont.systemFont(ofSize: 15, weight: .semibold)
+    static let body = NSFont.systemFont(ofSize: 12, weight: .regular)
+    static let bodyStrong = NSFont.systemFont(ofSize: 12, weight: .medium)
+    static let caption = NSFont.systemFont(ofSize: 11, weight: .regular)
+    static let label = NSFont.systemFont(ofSize: 10, weight: .semibold)
+    static let meta = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+    static let tab = NSFont.systemFont(ofSize: 11, weight: .medium)
 }
 
 struct ThumbnailRef: Codable {
@@ -153,6 +175,29 @@ enum CatalogStore {
 enum UIHelpers {
     static func grokRoot() -> URL { GrokPaths.root }
 
+    static func applyResolveAppearance(to window: NSWindow) {
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.backgroundColor = GrokTheme.window
+    }
+
+    static func styleSectionHeading(_ field: NSTextField) {
+        field.font = GrokTypography.heading
+        field.textColor = GrokTheme.text
+        field.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    static func styleBodyText(_ field: NSTextField) {
+        field.font = GrokTypography.body
+        field.textColor = GrokTheme.textSecondary
+        field.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    static func styleCaption(_ field: NSTextField) {
+        field.font = GrokTypography.caption
+        field.textColor = GrokTheme.textSecondary
+        field.translatesAutoresizingMaskIntoConstraints = false
+    }
+
     static func headerView(title: String, subtitle: String) -> NSView {
         let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
@@ -165,13 +210,13 @@ enum UIHelpers {
         accent.layer?.backgroundColor = GrokTheme.accent.cgColor
 
         let titleLabel = NSTextField(labelWithString: title.uppercased())
-        titleLabel.font = NSFont.systemFont(ofSize: 11, weight: .semibold)
+        titleLabel.font = GrokTypography.label
         titleLabel.textColor = GrokTheme.text
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         let subtitleLabel = NSTextField(labelWithString: subtitle)
-        subtitleLabel.font = NSFont.systemFont(ofSize: 11, weight: .regular)
-        subtitleLabel.textColor = GrokTheme.muted
+        subtitleLabel.font = GrokTypography.caption
+        subtitleLabel.textColor = GrokTheme.textSecondary
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
 
         container.addSubview(accent)
@@ -194,14 +239,14 @@ enum UIHelpers {
 
     static func fieldLabel(_ text: String) -> NSTextField {
         let label = NSTextField(labelWithString: text.uppercased())
-        label.font = NSFont.systemFont(ofSize: 10, weight: .semibold)
-        label.textColor = GrokTheme.muted
+        label.font = GrokTypography.label
+        label.textColor = GrokTheme.label
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }
 
     static func styleField(_ field: NSTextField) {
-        field.font = NSFont.systemFont(ofSize: 12)
+        field.font = GrokTypography.body
         field.textColor = GrokTheme.text
         field.backgroundColor = GrokTheme.field
         field.isBordered = true
@@ -212,9 +257,27 @@ enum UIHelpers {
     }
 
     static func stylePopup(_ popup: NSPopUpButton) {
-        popup.font = NSFont.systemFont(ofSize: 12)
+        popup.font = GrokTypography.body
         popup.contentTintColor = GrokTheme.text
+        popup.wantsLayer = true
+        popup.layer?.backgroundColor = GrokTheme.field.cgColor
+        popup.layer?.cornerRadius = 2
+        popup.layer?.borderColor = GrokTheme.borderSubtle.cgColor
+        popup.layer?.borderWidth = 1
         popup.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    static func styleSegmentedControl(_ control: NSSegmentedControl) {
+        control.segmentStyle = .rounded
+        control.font = GrokTypography.caption
+        control.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    static func styleScrollView(_ scroll: NSScrollView) {
+        scroll.drawsBackground = true
+        scroll.backgroundColor = GrokTheme.fieldInset
+        scroll.borderType = .lineBorder
+        scroll.translatesAutoresizingMaskIntoConstraints = false
     }
 
     static func flatButton(_ title: String, accent: Bool, target: AnyObject?, action: Selector?) -> NSButton {
@@ -223,9 +286,13 @@ enum UIHelpers {
         button.isBordered = false
         button.wantsLayer = true
         button.layer?.backgroundColor = (accent ? GrokTheme.accent : GrokTheme.row).cgColor
-        button.layer?.cornerRadius = 3
-        button.contentTintColor = accent ? NSColor.black : GrokTheme.text
-        button.font = NSFont.systemFont(ofSize: 12, weight: accent ? .semibold : .regular)
+        button.layer?.cornerRadius = 2
+        if !accent {
+            button.layer?.borderColor = GrokTheme.border.cgColor
+            button.layer?.borderWidth = 1
+        }
+        button.contentTintColor = accent ? GrokTheme.accentText : GrokTheme.text
+        button.font = GrokTypography.bodyStrong
         button.translatesAutoresizingMaskIntoConstraints = false
         button.widthAnchor.constraint(greaterThanOrEqualToConstant: 84).isActive = true
         button.heightAnchor.constraint(equalToConstant: 26).isActive = true
@@ -298,8 +365,8 @@ enum UIHelpers {
         let panel = NSView()
         panel.wantsLayer = true
         panel.layer?.backgroundColor = GrokTheme.panel.cgColor
-        panel.layer?.cornerRadius = 4
-        panel.layer?.borderColor = GrokTheme.border.cgColor
+        panel.layer?.cornerRadius = 2
+        panel.layer?.borderColor = GrokTheme.borderSubtle.cgColor
         panel.layer?.borderWidth = 1
         panel.translatesAutoresizingMaskIntoConstraints = false
         return panel
@@ -310,10 +377,10 @@ enum UIHelpers {
         view.isEditable = false
         view.isSelectable = true
         view.drawsBackground = true
-        view.backgroundColor = GrokTheme.field
-        view.textColor = GrokTheme.muted
-        view.font = NSFont.monospacedSystemFont(ofSize: 9, weight: .regular)
-        view.textContainerInset = NSSize(width: 6, height: 6)
+        view.backgroundColor = GrokTheme.fieldInset
+        view.textColor = GrokTheme.textSecondary
+        view.font = GrokTypography.meta
+        view.textContainerInset = NSSize(width: 8, height: 8)
         view.isRichText = false
         return view
     }
@@ -327,13 +394,13 @@ enum UIHelpers {
         container.layer?.borderWidth = 1
 
         let source = NSTextField(labelWithString: GrokBrand.source)
-        source.font = NSFont.systemFont(ofSize: 10, weight: .medium)
-        source.textColor = GrokTheme.text
+        source.font = GrokTypography.caption
+        source.textColor = GrokTheme.textSecondary
         source.translatesAutoresizingMaskIntoConstraints = false
 
         let detail = NSTextField(labelWithString: "\(GrokBrand.trustLine)\n\(GrokPaths.root.path)")
-        detail.font = NSFont.systemFont(ofSize: 9)
-        detail.textColor = GrokTheme.muted
+        detail.font = NSFont.systemFont(ofSize: 10, weight: .regular)
+        detail.textColor = GrokTheme.textDim
         detail.maximumNumberOfLines = 2
         detail.translatesAutoresizingMaskIntoConstraints = false
 
