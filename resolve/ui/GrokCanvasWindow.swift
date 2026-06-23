@@ -13,6 +13,7 @@ enum GrokTabs {
         ("timeline", "Timeline"),
         ("browser", "Browser"),
         ("imdb", "IMDb"),
+        ("mkv", "MKV"),
         ("stream", "Stream"),
         ("folder", "Folder"),
     ]
@@ -69,6 +70,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private let browserStatus = NSTextField(wrappingLabelWithString: "Safari handoff via browser/inbox.json and clipboard")
     private let canvasBridgeStatus = NSTextField(wrappingLabelWithString: "Imagine + bridge — start bin/bridge for headless image/video")
     private var imdbController: ImdbTabController?
+    private var mkvController: MkvTabController?
     private var streamController: StreamTabController?
     private var terminalController: TerminalTabController?
     private var timelineController: TimelineTabController?
@@ -210,6 +212,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         case "timeline": panel = buildTimelineTab()
         case "browser": panel = buildBrowserTab()
         case "imdb": panel = buildImdbTab()
+        case "mkv": panel = buildMkvTab()
         case "stream": panel = buildStreamTab()
         case "folder": panel = buildSimpleTab(title: "Folder", body: "Open grok-public-folder in Finder.", action: "Open Folder", tabId: "folder")
         default: panel = buildCanvasTab()
@@ -370,6 +373,12 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             self?.applyGeneratedLut(slug: slug, display: display, promptAdd: promptAdd, lutPrompt: lutPrompt, posterPath: posterPath)
         }
         imdbController = controller
+        return controller.buildView()
+    }
+
+    private func buildMkvTab() -> NSView {
+        let controller = MkvTabController()
+        mkvController = controller
         return controller.buildView()
     }
 

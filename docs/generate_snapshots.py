@@ -28,7 +28,7 @@ TAB_ACTIVE = (59, 61, 65)
 
 TABS = [
     "Canvas", "Import", "Scan", "Bootstrap", "Bridge", "Terminal",
-    "Timeline", "Browser", "IMDb", "Stream", "Folder",
+    "Timeline", "Browser", "IMDb", "MKV", "Stream", "Folder",
 ]
 
 SCENES: dict[str, dict] = {
@@ -64,6 +64,11 @@ SCENES: dict[str, dict] = {
         "active": "IMDb",
         "body": "Search title or feel\nResults · Detail · Add to Prompt\nTMDB ✓ · xAI ✓",
         "buttons": ["Search Title", "Generate LUT", "Setup Keys"],
+    },
+    "mkv": {
+        "active": "MKV",
+        "body": "Paste URL → yt-dlp resolve\nScene snapshots · MKV archive · ffplay",
+        "buttons": ["Resolve", "Pull Scenes", "Download MKV", "ffplay Stream"],
     },
     "stream": {
         "active": "Stream",

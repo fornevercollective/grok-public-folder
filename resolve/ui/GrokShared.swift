@@ -126,6 +126,7 @@ enum GrokPaths {
     static var browserDir: URL { root.appendingPathComponent("browser", isDirectory: true) }
     static var imdbDir: URL { root.appendingPathComponent("imdb", isDirectory: true) }
     static var streamingDir: URL { root.appendingPathComponent("streaming", isDirectory: true) }
+    static var blankDir: URL { root.appendingPathComponent("blank", isDirectory: true) }
     static var projectDir: URL { root.appendingPathComponent("project", isDirectory: true) }
     static var binDir: URL { root.appendingPathComponent("bin", isDirectory: true) }
 }
