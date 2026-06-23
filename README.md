@@ -1,3 +1,14 @@
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 10 PM" src="https://github.com/user-attachments/assets/3af1668d-b485-4018-9b6c-b0b4605dfd6d" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 19 PM" src="https://github.com/user-attachments/assets/48847d43-f1c6-4d36-a5dc-29beca6a84f5" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 29 PM" src="https://github.com/user-attachments/assets/2cc04363-67ae-4233-a87d-2412f15fe190" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 37 PM" src="https://github.com/user-attachments/assets/c3d20d27-c86f-41fc-a949-146c8825ff57" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 33 PM" src="https://github.com/user-attachments/assets/d34ed81e-2525-42d6-91a4-444f3307567c" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 41 PM" src="https://github.com/user-attachments/assets/90e16f9b-5470-4ca0-9a46-8d32df346c15" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 46 PM" src="https://github.com/user-attachments/assets/4c78ef0d-8d38-46e3-8fdc-30f7928b5645" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 49 PM" src="https://github.com/user-attachments/assets/b1f015b7-8633-4a73-a678-d54de66cd07f" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 53 PM" src="https://github.com/user-attachments/assets/679b5f73-3753-4188-8b6b-4a1c196a245f" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 56 PM" src="https://github.com/user-attachments/assets/a816e7b4-2cf0-481e-b65b-6c4b85e87cee" />
+
 # grok-public-folder
 
 Fastest pipe: **Imagine presets → Grok generation → Resolve 4K edit → Colossus/Dojo training**
