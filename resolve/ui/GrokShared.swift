@@ -97,9 +97,13 @@ enum GrokPaths {
         return bin.deletingLastPathComponent()
     }
 
-    static var catalogURL: URL {
-        root.appendingPathComponent("project/generate-ui.json")
-    }
+    static var catalogURL: URL { root.appendingPathComponent("project/generate-ui.json") }
+    static var videoDir: URL { root.appendingPathComponent("video", isDirectory: true) }
+    static var imageDir: URL { root.appendingPathComponent("image", isDirectory: true) }
+    static var bridgeDir: URL { root.appendingPathComponent("bridge", isDirectory: true) }
+    static var browserDir: URL { root.appendingPathComponent("browser", isDirectory: true) }
+    static var projectDir: URL { root.appendingPathComponent("project", isDirectory: true) }
+    static var binDir: URL { root.appendingPathComponent("bin", isDirectory: true) }
 }
 
 enum CatalogStore {
@@ -266,6 +270,52 @@ enum UIHelpers {
                 DispatchQueue.main.async { imageView.image = image }
             }
         }
+    }
+
+    static func actionFooter(close: NSButton, generate: NSButton) -> NSView {
+        let container = NSView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.wantsLayer = true
+        container.layer?.backgroundColor = GrokTheme.panel.cgColor
+        container.layer?.borderColor = GrokTheme.border.cgColor
+        container.layer?.borderWidth = 1
+
+        let row = NSStackView(views: [close, generate])
+        row.orientation = .horizontal
+        row.spacing = 8
+        row.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(row)
+        NSLayoutConstraint.activate([
+            container.heightAnchor.constraint(equalToConstant: 40),
+            row.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -12),
+            row.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+        ])
+        return container
+    }
+
+    static func panelShell() -> NSView {
+        let panel = NSView()
+        panel.wantsLayer = true
+        panel.layer?.backgroundColor = GrokTheme.panel.cgColor
+        panel.layer?.cornerRadius = 4
+        panel.layer?.borderColor = GrokTheme.border.cgColor
+        panel.layer?.borderWidth = 1
+        panel.translatesAutoresizingMaskIntoConstraints = false
+        return panel
+    }
+
+    static func metaTextView() -> NSTextView {
+        let view = NSTextView()
+        view.isEditable = false
+        view.isSelectable = true
+        view.drawsBackground = true
+        view.backgroundColor = GrokTheme.field
+        view.textColor = GrokTheme.muted
+        view.font = NSFont.monospacedSystemFont(ofSize: 9, weight: .regular)
+        view.textContainerInset = NSSize(width: 6, height: 6)
+        view.isRichText = false
+        return view
     }
 
     static func trustFooter() -> NSView {

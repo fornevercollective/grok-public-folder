@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export GROK_PUBLIC_FOLDER="$ROOT"
 cd "$ROOT" || exit 1
 # shellcheck source=/dev/null
 source "$ROOT/bin/grok-trust"

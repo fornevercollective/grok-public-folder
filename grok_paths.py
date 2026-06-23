@@ -10,6 +10,7 @@ ROOT = Path(os.environ.get("GROK_PUBLIC_FOLDER", Path(__file__).resolve().parent
 VIDEO_DIR = ROOT / "video"
 IMAGE_DIR = ROOT / "image"
 BRIDGE_DIR = ROOT / "bridge"
+BROWSER_DIR = ROOT / "browser"
 PROJECT_DIR = ROOT / "project"
 PRESETS_MANIFEST = PROJECT_DIR / "presets-manifest.json"
 PRESET_CACHE_DIR = PROJECT_DIR / "preset-cache"

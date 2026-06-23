@@ -1,4 +1,4 @@
-dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_resolve.lua")
+dofile(GROK_ROOT .. "/resolve/lua/grok_resolve.lua")
 
 local TIMELINE_W = "3840"
 local TIMELINE_H = "2160"

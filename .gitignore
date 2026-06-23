@@ -4,5 +4,8 @@ bridge/request.json
 bridge/response.json
 bridge/chat_history.json
 bridge/bridge.pid
+browser/inbox.json
+browser/outbox.json
+browser/state.json
 bin/grok-menu-ui
 .DS_Store

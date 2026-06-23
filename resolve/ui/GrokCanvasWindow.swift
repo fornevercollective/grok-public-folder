@@ -9,6 +9,7 @@ enum GrokTabs {
         ("scan", "Scan"),
         ("bootstrap", "Bootstrap"),
         ("bridge", "Bridge"),
+        ("browser", "Browser"),
         ("folder", "Folder"),
     ]
 }
@@ -22,16 +23,30 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private var activeTab = "canvas"
     private var selectedPreset: PresetEntry?
     private var selectedMedia: MediaItem?
+    private var selectedLut: PresetEntry?
+    private var viewerMode: ViewerMode = .media
     private var playerView: AVPlayerView?
 
     private let tabBar = NSStackView()
     private let contentHost = NSView()
     private var tabButtons: [String: TabButton] = [:]
 
+    private let closeButton = UIHelpers.flatButton("Close", accent: false, target: nil, action: nil)
+    private let generateButton = UIHelpers.flatButton("Generate Video", accent: true, target: nil, action: nil)
+    private let actionFooterHost = NSView()
+
     private let mediaView = NSImageView()
     private let mediaLabel = NSTextField(labelWithString: "Load a reference or pick from library")
     private let mediaStrip = NSStackView()
     private let playerHost = NSView()
+    private let viewerModeControl = NSSegmentedControl(labels: ["Media", "Preset"], trackingMode: .selectOne, target: nil, action: nil)
+    private let metaView = UIHelpers.metaTextView()
+    private let metaScroll = NSScrollView()
+
+    private let lutPreviewView = NSImageView()
+    private let lutMetaView = UIHelpers.metaTextView()
+    private let lutMetaScroll = NSScrollView()
+    private let lutTitle = NSTextField(labelWithString: "LUT viewer")
 
     private let groupPopup = NSPopUpButton()
     private let presetPopup = NSPopUpButton()
@@ -43,6 +58,8 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private let promptAddField = NSTextField(string: "")
     private let continuityField = NSTextField(string: "")
     private let presetPreview = NSTextField(wrappingLabelWithString: "")
+
+    private let browserStatus = NSTextField(wrappingLabelWithString: "Safari handoff via browser/inbox.json and clipboard")
 
     init(catalog: GenerateCatalog) {
         self.catalog = catalog
@@ -70,7 +87,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
 
     private func makeWindow() -> NSWindow {
         let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
-        let size = NSSize(width: 1040, height: 700)
+        let size = NSSize(width: 1180, height: 740)
         let origin = NSPoint(x: screen.midX - size.width / 2, y: screen.midY - size.height / 2)
         let window = NSWindow(
             contentRect: NSRect(origin: origin, size: size),
@@ -81,7 +98,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         window.title = GrokBrand.appName
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.minSize = NSSize(width: 920, height: 620)
+        window.minSize = NSSize(width: 980, height: 640)
         window.backgroundColor = GrokTheme.window
 
         let root = NSView()
@@ -89,11 +106,19 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         let header = UIHelpers.headerView(title: GrokBrand.appName, subtitle: "Imagine canvas → Resolve edit")
         let tabs = buildTabBar()
         contentHost.translatesAutoresizingMaskIntoConstraints = false
+
+        closeButton.target = self
+        closeButton.action = #selector(cancelPressed)
+        generateButton.target = self
+        generateButton.action = #selector(generatePressed)
+        generateButton.keyEquivalent = "\r"
+        let actionFooter = UIHelpers.actionFooter(close: closeButton, generate: generateButton)
         let trust = UIHelpers.trustFooter()
 
         root.addSubview(header)
         root.addSubview(tabs)
         root.addSubview(contentHost)
+        root.addSubview(actionFooter)
         root.addSubview(trust)
         window.contentView = root
 
@@ -107,15 +132,25 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             contentHost.topAnchor.constraint(equalTo: tabs.bottomAnchor, constant: 8),
             contentHost.leadingAnchor.constraint(equalTo: root.leadingAnchor),
             contentHost.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+            actionFooter.topAnchor.constraint(equalTo: contentHost.bottomAnchor),
+            actionFooter.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            actionFooter.trailingAnchor.constraint(equalTo: root.trailingAnchor),
             trust.bottomAnchor.constraint(equalTo: root.bottomAnchor),
             trust.leadingAnchor.constraint(equalTo: root.leadingAnchor),
             trust.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            contentHost.bottomAnchor.constraint(equalTo: trust.topAnchor),
+            actionFooter.bottomAnchor.constraint(equalTo: trust.topAnchor),
         ])
 
         populateGenerateControls()
         reloadMediaStrip()
+        updateActionFooter()
         return window
+    }
+
+    private func updateActionFooter() {
+        let onCanvas = activeTab == "canvas"
+        generateButton.isHidden = !onCanvas
+        generateButton.isEnabled = onCanvas && selectedPreset != nil
     }
 
     private func buildTabBar() -> NSView {
@@ -150,6 +185,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         case "scan": panel = buildSimpleTab(title: "Scan Downloads", body: "Find Grok media in Downloads and offer to move into artifacts folders.", action: "Scan Downloads", tabId: "scan")
         case "bootstrap": panel = buildSimpleTab(title: "Bootstrap", body: "Create 4K bins, timeline settings, and grok_generated import target in the open Resolve project.", action: "Run Bootstrap", tabId: "bootstrap")
         case "bridge": panel = buildSimpleTab(title: "Bridge", body: "Open Terminal bridge for chat and headless generate requests from Resolve.", action: "Start Bridge", tabId: "bridge")
+        case "browser": panel = buildBrowserTab()
         case "folder": panel = buildSimpleTab(title: "Folder", body: "Open grok-public-folder in Finder.", action: "Open Folder", tabId: "folder")
         default: panel = buildCanvasTab()
         }
@@ -161,6 +197,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             panel.trailingAnchor.constraint(equalTo: contentHost.trailingAnchor),
             panel.bottomAnchor.constraint(equalTo: contentHost.bottomAnchor),
         ])
+        updateActionFooter()
     }
 
     private func buildSimpleTab(title: String, body: String, action: String, tabId: String) -> NSView {
@@ -227,6 +264,91 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         return panel
     }
 
+    private func buildBrowserTab() -> NSView {
+        let panel = NSView()
+        let heading = NSTextField(labelWithString: "Grok Browser (Safari)")
+        heading.font = NSFont.systemFont(ofSize: 18, weight: .semibold)
+        heading.textColor = GrokTheme.text
+        heading.translatesAutoresizingMaskIntoConstraints = false
+
+        let text = NSTextField(wrappingLabelWithString:
+            "Talk between grok.com/imagine in Safari and this Resolve workflow. " +
+            "Pull reads browser/inbox.json or clipboard; Push writes browser/outbox.json and copies your prompt."
+        )
+        text.font = NSFont.systemFont(ofSize: 12)
+        text.textColor = GrokTheme.muted
+        text.translatesAutoresizingMaskIntoConstraints = false
+
+        browserStatus.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+        browserStatus.textColor = GrokTheme.muted
+        browserStatus.translatesAutoresizingMaskIntoConstraints = false
+
+        let openBtn = UIHelpers.flatButton("Open Safari (Imagine)", accent: true, target: self, action: #selector(browserOpenPressed))
+        let pullBtn = UIHelpers.flatButton("Pull Prompt", accent: false, target: self, action: #selector(browserPullPressed))
+        let pushBtn = UIHelpers.flatButton("Push Prompt", accent: false, target: self, action: #selector(browserPushPressed))
+        let folderBtn = UIHelpers.flatButton("Open browser/", accent: false, target: self, action: #selector(browserFolderPressed))
+        let row = NSStackView(views: [openBtn, pullBtn, pushBtn, folderBtn])
+        row.orientation = .horizontal
+        row.spacing = 8
+        row.translatesAutoresizingMaskIntoConstraints = false
+
+        panel.addSubview(heading)
+        panel.addSubview(text)
+        panel.addSubview(row)
+        panel.addSubview(browserStatus)
+        NSLayoutConstraint.activate([
+            heading.topAnchor.constraint(equalTo: panel.topAnchor, constant: 20),
+            heading.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 16),
+            text.topAnchor.constraint(equalTo: heading.bottomAnchor, constant: 10),
+            text.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
+            text.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -16),
+            row.topAnchor.constraint(equalTo: text.bottomAnchor, constant: 16),
+            row.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
+            browserStatus.topAnchor.constraint(equalTo: row.bottomAnchor, constant: 14),
+            browserStatus.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
+            browserStatus.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -16),
+        ])
+        refreshBrowserStatus()
+        return panel
+    }
+
+    @objc private func browserOpenPressed() {
+        let result = BrowserBridge.run(["open"])
+        browserStatus.stringValue = result.ok ? "Opened Safari → grok.com/imagine" : "Failed: \(result.output)"
+    }
+
+    @objc private func browserPullPressed() {
+        let result = BrowserBridge.run(["pull"])
+        if result.ok, !result.output.isEmpty {
+            promptView.string = result.output
+            browserStatus.stringValue = "Pulled prompt into Canvas (\(result.output.prefix(60))…)"
+            switchTab("canvas")
+        } else {
+            browserStatus.stringValue = result.output.isEmpty ? "Pull failed" : result.output
+        }
+    }
+
+    @objc private func browserPushPressed() {
+        let prompt = promptView.string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty else {
+            browserStatus.stringValue = "Enter a prompt on the Canvas tab first"
+            return
+        }
+        let result = BrowserBridge.run(["push", prompt])
+        browserStatus.stringValue = result.ok ? "Pushed to Safari + browser/outbox.json" : "Failed: \(result.output)"
+    }
+
+    @objc private func browserFolderPressed() {
+        NSWorkspace.shared.open(GrokPaths.browserDir)
+    }
+
+    private func refreshBrowserStatus() {
+        let result = BrowserBridge.run(["status"])
+        if result.ok {
+            browserStatus.stringValue = result.output
+        }
+    }
+
     @objc private func scanImportPressed() {
         complete("ACTION:Scan + Import")
         window?.close()
@@ -248,13 +370,15 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private func buildCanvasTab() -> NSView {
         let panel = NSView()
         let left = buildMediaPanel()
-        let right = buildPromptPanel()
-        let split = NSStackView(views: [left, right])
+        let center = buildPromptPanel()
+        let right = buildLutPanel()
+        let split = NSStackView(views: [left, center, right])
         split.orientation = .horizontal
-        split.spacing = 12
+        split.spacing = 10
         split.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 8, right: 12)
         split.translatesAutoresizingMaskIntoConstraints = false
-        left.widthAnchor.constraint(equalToConstant: 360).isActive = true
+        left.widthAnchor.constraint(equalToConstant: 300).isActive = true
+        right.widthAnchor.constraint(equalToConstant: 240).isActive = true
         panel.addSubview(split)
         NSLayoutConstraint.activate([
             split.topAnchor.constraint(equalTo: panel.topAnchor),
@@ -262,19 +386,20 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             split.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
             split.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
         ])
+        refreshViewer()
+        updateLutViewer()
         return panel
     }
 
     private func buildMediaPanel() -> NSView {
-        let panel = NSView()
-        panel.wantsLayer = true
-        panel.layer?.backgroundColor = GrokTheme.panel.cgColor
-        panel.layer?.cornerRadius = 4
-        panel.layer?.borderColor = GrokTheme.border.cgColor
-        panel.layer?.borderWidth = 1
-        panel.translatesAutoresizingMaskIntoConstraints = false
+        let panel = UIHelpers.panelShell()
 
         let title = UIHelpers.fieldLabel("Canvas viewer")
+        viewerModeControl.selectedSegment = 0
+        viewerModeControl.target = self
+        viewerModeControl.action = #selector(viewerModeChanged)
+        viewerModeControl.translatesAutoresizingMaskIntoConstraints = false
+
         mediaView.translatesAutoresizingMaskIntoConstraints = false
         mediaView.imageScaling = .scaleProportionallyUpOrDown
         mediaView.wantsLayer = true
@@ -288,6 +413,15 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         mediaLabel.textColor = GrokTheme.muted
         mediaLabel.maximumNumberOfLines = 2
         mediaLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        metaScroll.translatesAutoresizingMaskIntoConstraints = false
+        metaScroll.hasVerticalScroller = true
+        metaScroll.borderType = .bezelBorder
+        metaScroll.documentView = metaView
+        metaView.translatesAutoresizingMaskIntoConstraints = false
+        metaView.widthAnchor.constraint(equalTo: metaScroll.contentView.widthAnchor).isActive = true
+
+        let metaLabel = UIHelpers.fieldLabel("Content meta")
 
         let loadBtn = UIHelpers.flatButton("Load…", accent: false, target: self, action: #selector(loadPressed))
         let refreshBtn = UIHelpers.flatButton("Refresh", accent: false, target: self, action: #selector(refreshMediaPressed))
@@ -307,12 +441,15 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         stripScroll.documentView = mediaStrip
         mediaStrip.topAnchor.constraint(equalTo: stripScroll.contentView.topAnchor).isActive = true
         mediaStrip.leadingAnchor.constraint(equalTo: stripScroll.contentView.leadingAnchor).isActive = true
-        mediaStrip.heightAnchor.constraint(equalToConstant: 56).isActive = true
+        mediaStrip.heightAnchor.constraint(equalToConstant: 52).isActive = true
 
         panel.addSubview(title)
+        panel.addSubview(viewerModeControl)
         panel.addSubview(mediaView)
         panel.addSubview(playerHost)
         panel.addSubview(mediaLabel)
+        panel.addSubview(metaLabel)
+        panel.addSubview(metaScroll)
         panel.addSubview(btnRow)
         panel.addSubview(stripLabel)
         panel.addSubview(stripScroll)
@@ -320,26 +457,74 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         NSLayoutConstraint.activate([
             title.topAnchor.constraint(equalTo: panel.topAnchor, constant: 10),
             title.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 10),
-            mediaView.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 6),
+            viewerModeControl.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 6),
+            viewerModeControl.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 10),
+            mediaView.topAnchor.constraint(equalTo: viewerModeControl.bottomAnchor, constant: 6),
             mediaView.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 10),
             mediaView.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -10),
-            mediaView.heightAnchor.constraint(equalToConstant: 220),
+            mediaView.heightAnchor.constraint(equalToConstant: 160),
             playerHost.topAnchor.constraint(equalTo: mediaView.topAnchor),
             playerHost.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
             playerHost.trailingAnchor.constraint(equalTo: mediaView.trailingAnchor),
             playerHost.bottomAnchor.constraint(equalTo: mediaView.bottomAnchor),
-            mediaLabel.topAnchor.constraint(equalTo: mediaView.bottomAnchor, constant: 6),
+            mediaLabel.topAnchor.constraint(equalTo: mediaView.bottomAnchor, constant: 4),
             mediaLabel.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
             mediaLabel.trailingAnchor.constraint(equalTo: mediaView.trailingAnchor),
-            btnRow.topAnchor.constraint(equalTo: mediaLabel.bottomAnchor, constant: 8),
+            metaLabel.topAnchor.constraint(equalTo: mediaLabel.bottomAnchor, constant: 6),
+            metaLabel.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
+            metaScroll.topAnchor.constraint(equalTo: metaLabel.bottomAnchor, constant: 4),
+            metaScroll.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
+            metaScroll.trailingAnchor.constraint(equalTo: mediaView.trailingAnchor),
+            metaScroll.heightAnchor.constraint(equalToConstant: 88),
+            btnRow.topAnchor.constraint(equalTo: metaScroll.bottomAnchor, constant: 8),
             btnRow.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
-            stripLabel.topAnchor.constraint(equalTo: btnRow.bottomAnchor, constant: 10),
+            stripLabel.topAnchor.constraint(equalTo: btnRow.bottomAnchor, constant: 8),
             stripLabel.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
             stripScroll.topAnchor.constraint(equalTo: stripLabel.bottomAnchor, constant: 4),
             stripScroll.leadingAnchor.constraint(equalTo: mediaView.leadingAnchor),
             stripScroll.trailingAnchor.constraint(equalTo: mediaView.trailingAnchor),
             stripScroll.bottomAnchor.constraint(equalTo: panel.bottomAnchor, constant: -10),
-            stripScroll.heightAnchor.constraint(equalToConstant: 60),
+            stripScroll.heightAnchor.constraint(equalToConstant: 56),
+        ])
+        return panel
+    }
+
+    private func buildLutPanel() -> NSView {
+        let panel = UIHelpers.panelShell()
+
+        lutTitle.font = NSFont.systemFont(ofSize: 10, weight: .semibold)
+        lutTitle.textColor = GrokTheme.muted
+        lutTitle.stringValue = "LUT VIEWER"
+        lutTitle.translatesAutoresizingMaskIntoConstraints = false
+
+        lutPreviewView.translatesAutoresizingMaskIntoConstraints = false
+        lutPreviewView.imageScaling = .scaleProportionallyUpOrDown
+        lutPreviewView.wantsLayer = true
+        lutPreviewView.layer?.backgroundColor = GrokTheme.field.cgColor
+        lutPreviewView.layer?.cornerRadius = 3
+
+        lutMetaScroll.translatesAutoresizingMaskIntoConstraints = false
+        lutMetaScroll.hasVerticalScroller = true
+        lutMetaScroll.borderType = .bezelBorder
+        lutMetaScroll.documentView = lutMetaView
+        lutMetaView.translatesAutoresizingMaskIntoConstraints = false
+        lutMetaView.widthAnchor.constraint(equalTo: lutMetaScroll.contentView.widthAnchor).isActive = true
+
+        panel.addSubview(lutTitle)
+        panel.addSubview(lutPreviewView)
+        panel.addSubview(lutMetaScroll)
+
+        NSLayoutConstraint.activate([
+            lutTitle.topAnchor.constraint(equalTo: panel.topAnchor, constant: 10),
+            lutTitle.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 10),
+            lutPreviewView.topAnchor.constraint(equalTo: lutTitle.bottomAnchor, constant: 6),
+            lutPreviewView.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 10),
+            lutPreviewView.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -10),
+            lutPreviewView.heightAnchor.constraint(equalToConstant: 130),
+            lutMetaScroll.topAnchor.constraint(equalTo: lutPreviewView.bottomAnchor, constant: 8),
+            lutMetaScroll.leadingAnchor.constraint(equalTo: lutPreviewView.leadingAnchor),
+            lutMetaScroll.trailingAnchor.constraint(equalTo: lutPreviewView.trailingAnchor),
+            lutMetaScroll.bottomAnchor.constraint(equalTo: panel.bottomAnchor, constant: -10),
         ])
         return panel
     }
@@ -389,9 +574,6 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
 
         UIHelpers.styleField(promptAddField)
         UIHelpers.styleField(continuityField)
-        let generate = UIHelpers.flatButton("Generate Video", accent: true, target: self, action: #selector(generatePressed))
-        generate.keyEquivalent = "\r"
-        let cancel = UIHelpers.flatButton("Close", accent: false, target: self, action: #selector(cancelPressed))
 
         panel.addSubview(genreLabel)
         panel.addSubview(groupPopup)
@@ -407,8 +589,6 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         panel.addSubview(promptAddField)
         panel.addSubview(continuityLabel)
         panel.addSubview(continuityField)
-        panel.addSubview(cancel)
-        panel.addSubview(generate)
 
         NSLayoutConstraint.activate([
             genreLabel.topAnchor.constraint(equalTo: panel.topAnchor, constant: 4),
@@ -426,7 +606,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             promptScroll.topAnchor.constraint(equalTo: promptLabel.bottomAnchor, constant: 4),
             promptScroll.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             promptScroll.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
-            promptScroll.heightAnchor.constraint(equalToConstant: 120),
+            promptScroll.heightAnchor.constraint(equalToConstant: 110),
             presetPreview.topAnchor.constraint(equalTo: promptScroll.bottomAnchor, constant: 6),
             presetPreview.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             presetPreview.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
@@ -442,10 +622,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             continuityField.topAnchor.constraint(equalTo: continuityLabel.bottomAnchor, constant: 4),
             continuityField.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             continuityField.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
-            generate.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
-            generate.bottomAnchor.constraint(equalTo: panel.bottomAnchor, constant: -8),
-            cancel.trailingAnchor.constraint(equalTo: generate.leadingAnchor, constant: -8),
-            cancel.bottomAnchor.constraint(equalTo: generate.bottomAnchor),
+            continuityField.bottomAnchor.constraint(lessThanOrEqualTo: panel.bottomAnchor, constant: -8),
         ])
         return panel
     }
@@ -481,13 +658,84 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         selectPopupTitle(resolutionPopup, title: d.resolution)
         selectPopupTitle(aspectPopup, title: d.aspectRatio)
         reloadPresets(selectSlug: d.slug)
+        if !d.lutSlug.isEmpty {
+            selectPopupItem(lutPopup, matching: d.lutSlug)
+            lutChanged()
+        }
+    }
+
+    @objc private func viewerModeChanged() {
+        viewerMode = viewerModeControl.selectedSegment == 1 ? .preset : .media
+        refreshViewer()
+    }
+
+    private func refreshViewer() {
+        switch viewerMode {
+        case .media:
+            if let media = selectedMedia {
+                showMedia(media, updateMode: false)
+            } else if let preset = selectedPreset {
+                showPresetInViewer(preset)
+            } else {
+                mediaLabel.stringValue = "Load a reference or pick from library"
+                metaView.string = "No media selected"
+            }
+        case .preset:
+            if let preset = selectedPreset {
+                showPresetInViewer(preset)
+            } else {
+                mediaLabel.stringValue = "Select a preset"
+                metaView.string = "No preset selected"
+                mediaView.image = nil
+                playerHost.isHidden = true
+                mediaView.isHidden = false
+            }
+        }
+    }
+
+    private func showPresetInViewer(_ preset: PresetEntry) {
+        playerView?.player?.pause()
+        playerView?.removeFromSuperview()
+        playerView = nil
+        playerHost.isHidden = true
+        mediaView.isHidden = false
+        UIHelpers.loadThumbnail(for: preset, into: mediaView)
+        mediaLabel.stringValue = "Preset · \(preset.display)"
+        metaView.string = MediaLibrary.metaLines(for: preset).joined(separator: "\n")
+    }
+
+    private func updateMetaPanel() {
+        switch viewerMode {
+        case .media:
+            if let media = selectedMedia {
+                metaView.string = MediaLibrary.metaLines(for: media).joined(separator: "\n")
+            }
+        case .preset:
+            if let preset = selectedPreset {
+                metaView.string = MediaLibrary.metaLines(for: preset).joined(separator: "\n")
+            }
+        }
+    }
+
+    private func updateLutViewer() {
+        guard let lut = selectedLut else {
+            lutTitle.stringValue = "LUT VIEWER"
+            lutPreviewView.image = nil
+            lutMetaView.string = "Select a LUT from the dropdown"
+            return
+        }
+        lutTitle.stringValue = lut.display.uppercased()
+        UIHelpers.loadThumbnail(for: lut, into: lutPreviewView)
+        lutMetaView.string = MediaLibrary.metaLines(for: lut).joined(separator: "\n")
     }
 
     @objc private func loadPressed() {
         guard let url = MediaLibrary.pickFile() else { return }
         let ext = url.pathExtension.lowercased()
         let kind = ["mp4", "mov", "m4v", "webm"].contains(ext) ? "video" : "image"
-        let item = MediaItem(id: url.path, path: url, name: url.lastPathComponent, kind: kind, modified: Date())
+        let item = MediaItem(id: url.path, path: url, name: url.lastPathComponent, kind: kind, modified: Date(), meta: MediaLibrary.readSidecar(for: url))
+        viewerMode = .media
+        viewerModeControl.selectedSegment = 0
         showMedia(item)
     }
 
@@ -507,14 +755,17 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     }
 
     @objc private func mediaThumbPressed(_ sender: MediaThumbButton) {
+        viewerMode = .media
+        viewerModeControl.selectedSegment = 0
         showMedia(sender.item)
         for case let button as MediaThumbButton in mediaStrip.arrangedSubviews {
             button.isSelected = button.item.id == sender.item.id
         }
     }
 
-    private func showMedia(_ item: MediaItem) {
+    private func showMedia(_ item: MediaItem, updateMode: Bool = true) {
         selectedMedia = item
+        if updateMode { viewerMode = .media; viewerModeControl.selectedSegment = 0 }
         mediaLabel.stringValue = "\(item.kind.uppercased()) · \(item.name)"
         playerView?.removeFromSuperview()
         playerView = nil
@@ -541,6 +792,7 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
                 self?.mediaView.image = image
             }
         }
+        updateMetaPanel()
     }
 
     @objc private func groupChanged() { reloadPresets(selectSlug: nil) }
@@ -552,24 +804,27 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         let preset = group.presets[index]
         selectedPreset = preset
         presetPreview.stringValue = preset.promptPreview
+        updateActionFooter()
         if promptView.string.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             promptView.string = catalog.defaults.prompt
         }
-        if selectedMedia == nil {
-            UIHelpers.loadThumbnail(for: preset, into: mediaView)
-            playerHost.isHidden = true
-            mediaView.isHidden = false
-            playerView?.player?.pause()
-            mediaLabel.stringValue = "Preset · \(preset.display)"
+        if viewerMode == .preset || selectedMedia == nil {
+            showPresetInViewer(preset)
         }
     }
 
     @objc private func lutChanged() {
-        guard let slug = lutPopup.selectedItem?.representedObject as? String, !slug.isEmpty else { return }
-        if let lut = catalog.lutPresets.first(where: { $0.slug == slug }),
-           promptAddField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            promptAddField.stringValue = "Apply \(lut.display) color grade"
+        let slug = (lutPopup.selectedItem?.representedObject as? String) ?? ""
+        if slug.isEmpty {
+            selectedLut = nil
+        } else {
+            selectedLut = catalog.lutPresets.first(where: { $0.slug == slug })
+            if let lut = selectedLut,
+               promptAddField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                promptAddField.stringValue = "Apply \(lut.display) color grade"
+            }
         }
+        updateLutViewer()
     }
 
     @objc private func generatePressed() {

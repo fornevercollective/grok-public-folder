@@ -1,8 +1,8 @@
-dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_startup.lua")
+dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_paths.lua")
+dofile(GROK_ROOT .. "/resolve/lua/grok_startup.lua")
 
-local GROK_ROOT = "/Users/tref/film/grok-public-folder"
-local TERMINAL_LAUNCHER = GROK_ROOT .. "/bin/grok-terminal"
-local MENU_UI = GROK_ROOT .. "/bin/grok-menu"
+local TERMINAL_LAUNCHER = GROK_BIN .. "/grok-terminal"
+local MENU_UI = GROK_BIN .. "/grok-menu"
 local APP_NAME = "Grok for Resolve"
 local APP_SOURCE = "DaVinci Resolve → Workspace → Scripts → Grok"
 
@@ -18,7 +18,7 @@ local function shell_quote(value)
 end
 
 local function run_menu_ui(...)
-    local parts = { shell_quote(MENU_UI) }
+    local parts = { "GROK_PUBLIC_FOLDER=" .. shell_quote(GROK_ROOT), shell_quote(MENU_UI) }
     for i = 1, select("#", ...) do
         table.insert(parts, shell_quote(select(i, ...)))
     end
@@ -85,19 +85,20 @@ end
 local function open_terminal(command, label)
     local escaped_cmd = command:gsub("'", "'\\''")
     local escaped_label = (label or "Workflow"):gsub("'", "'\\''")
-    os.execute("'" .. TERMINAL_LAUNCHER .. "' '" .. escaped_cmd .. "' '" .. escaped_label .. "'")
+    os.execute("GROK_PUBLIC_FOLDER=" .. shell_quote(GROK_ROOT) .. " '" .. TERMINAL_LAUNCHER .. "' '" .. escaped_cmd .. "' '" .. escaped_label .. "'")
 end
 
 local function run_python_background(subcmd)
-    local log = GROK_ROOT .. "/bridge/menu-last.log"
-    local cmd = "/usr/bin/env python3 " .. GROK_ROOT .. "/grok_menu_cli.py " .. subcmd ..
+    local log = GROK_BRIDGE .. "/menu-last.log"
+    local cmd = "GROK_PUBLIC_FOLDER=" .. shell_quote(GROK_ROOT) ..
+        " /usr/bin/env python3 " .. GROK_ROOT .. "/grok_menu_cli.py " .. subcmd ..
         " >> " .. log .. " 2>&1 &"
     os.execute(cmd)
 end
 
 local function build_generate_cmd(opts)
     local parts = {
-        GROK_ROOT .. "/bin/generate",
+        GROK_BIN .. "/generate",
         "--slug", shell_quote(opts.SLUG),
         "--prompt", shell_quote(opts.PROMPT),
     }
@@ -147,7 +148,7 @@ local function action_bridge()
         "Start Bridge",
         "Terminal tab title: Grok · Start Bridge\nRuns: bin/bridge → local Grok chat/generate listener"
     ))
-    open_terminal(GROK_ROOT .. "/bin/bridge", "Start Bridge")
+    open_terminal(GROK_BIN .. "/bridge", "Start Bridge")
     notify("Terminal opened for Bridge — export XAI_API_KEY first")
 end
 
@@ -164,14 +165,11 @@ local function dispatch(choice)
         run_python_background("scan")
         grok_import_verbose()
     elseif choice == "Open Folder" then
-        os.execute("open " .. GROK_ROOT)
+        os.execute("open " .. shell_quote(GROK_ROOT))
     elseif choice == "Start Bridge" then
         action_bridge()
     elseif choice == "Generate Video" then
         -- handled via canvas generate output
-    elseif choice == "Scan + Import" then
-        run_python_background("scan")
-        grok_import_verbose()
     else
         alert("Grok", "Unknown choice: " .. tostring(choice))
     end

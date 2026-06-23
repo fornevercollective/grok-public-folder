@@ -1,4 +1,7 @@
-local ARTIFACTS = "/Users/tref/film/grok-public-folder"
+if not GROK_ROOT then
+    dofile("/Users/tref/film/grok-public-folder/resolve/lua/grok_paths.lua")
+end
+local ARTIFACTS = GROK_ROOT
 local MEDIA_EXT = {
     [".mp4"] = true, [".mov"] = true, [".m4v"] = true,
     [".png"] = true, [".jpg"] = true, [".jpeg"] = true, [".webp"] = true,

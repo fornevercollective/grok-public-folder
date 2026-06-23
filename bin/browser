@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export GROK_PUBLIC_FOLDER="$ROOT"
-exec python3 "$ROOT/grok_console.py" "$@"
+exec python3 "$ROOT/grok_browser.py" "$@"

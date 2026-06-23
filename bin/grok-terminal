@@ -3,6 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export GROK_PUBLIC_FOLDER="$ROOT"
 CMD="${1:-$ROOT/bin/grok}"
 LABEL="${2:-Workflow}"
 TITLE="Grok · ${LABEL}"
@@ -23,6 +24,7 @@ echo "  Repo: fornevercollective/grok-public-folder"
 echo "  Uses: local scripts + x.ai API (your XAI_API_KEY only)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
+export GROK_PUBLIC_FOLDER="${ROOT}"
 export XAI_API_KEY="\${XAI_API_KEY}"
 ${CMD}
 EOS
