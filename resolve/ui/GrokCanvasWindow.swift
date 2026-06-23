@@ -10,6 +10,8 @@ enum GrokTabs {
         ("bootstrap", "Bootstrap"),
         ("bridge", "Bridge"),
         ("browser", "Browser"),
+        ("imdb", "IMDb"),
+        ("stream", "Stream"),
         ("folder", "Folder"),
     ]
 }
@@ -60,6 +62,8 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private let presetPreview = NSTextField(wrappingLabelWithString: "")
 
     private let browserStatus = NSTextField(wrappingLabelWithString: "Safari handoff via browser/inbox.json and clipboard")
+    private var imdbController: ImdbTabController?
+    private var streamController: StreamTabController?
 
     init(catalog: GenerateCatalog) {
         self.catalog = catalog
@@ -186,6 +190,8 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         case "bootstrap": panel = buildSimpleTab(title: "Bootstrap", body: "Create 4K bins, timeline settings, and grok_generated import target in the open Resolve project.", action: "Run Bootstrap", tabId: "bootstrap")
         case "bridge": panel = buildSimpleTab(title: "Bridge", body: "Open Terminal bridge for chat and headless generate requests from Resolve.", action: "Start Bridge", tabId: "bridge")
         case "browser": panel = buildBrowserTab()
+        case "imdb": panel = buildImdbTab()
+        case "stream": panel = buildStreamTab()
         case "folder": panel = buildSimpleTab(title: "Folder", body: "Open grok-public-folder in Finder.", action: "Open Folder", tabId: "folder")
         default: panel = buildCanvasTab()
         }
@@ -335,6 +341,20 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         if result.ok {
             browserStatus.stringValue = result.output
         }
+    }
+
+    private func buildImdbTab() -> NSView {
+        let controller = ImdbTabController()
+        controller.promptView = promptView
+        controller.onSwitchToCanvas = { [weak self] in self?.switchTab("canvas") }
+        imdbController = controller
+        return controller.buildView()
+    }
+
+    private func buildStreamTab() -> NSView {
+        let controller = StreamTabController()
+        streamController = controller
+        return controller.buildView()
     }
 
     @objc private func scanImportPressed() {
