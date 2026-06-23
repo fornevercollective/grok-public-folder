@@ -26,6 +26,7 @@ final class GrokApp: NSObject, NSApplicationDelegate {
     private var windowClosers: [WindowCloser] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        GrokEditMenu.install()
         let args = CommandLine.arguments.dropFirst()
         if let first = args.first {
             mode = first

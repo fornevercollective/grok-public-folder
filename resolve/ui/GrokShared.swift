@@ -1,6 +1,66 @@
 import AppKit
 import Foundation
 
+enum GrokEditMenu {
+    static func install() {
+        let mainMenu = NSMenu()
+
+        let appItem = NSMenuItem()
+        appItem.submenu = NSMenu(title: GrokBrand.appName)
+        mainMenu.addItem(appItem)
+        appItem.submenu?.addItem(
+            withTitle: "Close Grok",
+            action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "w"
+        )
+
+        let editItem = NSMenuItem()
+        editItem.submenu = NSMenu(title: "Edit")
+        mainMenu.addItem(editItem)
+        guard let editMenu = editItem.submenu else { return }
+
+        editMenu.addItem(
+            withTitle: "Undo",
+            action: Selector(("undo:")),
+            keyEquivalent: "z"
+        )
+        editMenu.addItem(
+            withTitle: "Redo",
+            action: Selector(("redo:")),
+            keyEquivalent: "Z"
+        )
+        editMenu.addItem(.separator())
+        editMenu.addItem(
+            withTitle: "Cut",
+            action: #selector(NSText.cut(_:)),
+            keyEquivalent: "x"
+        )
+        editMenu.addItem(
+            withTitle: "Copy",
+            action: #selector(NSText.copy(_:)),
+            keyEquivalent: "c"
+        )
+        editMenu.addItem(
+            withTitle: "Paste",
+            action: #selector(NSText.paste(_:)),
+            keyEquivalent: "v"
+        )
+        editMenu.addItem(
+            withTitle: "Delete",
+            action: #selector(NSText.delete(_:)),
+            keyEquivalent: "\u{8}"
+        )
+        editMenu.addItem(.separator())
+        editMenu.addItem(
+            withTitle: "Select All",
+            action: #selector(NSText.selectAll(_:)),
+            keyEquivalent: "a"
+        )
+
+        NSApp.mainMenu = mainMenu
+    }
+}
+
 enum GrokBrand {
     static let appName = "Grok for Resolve"
     static let shortName = "Grok"
@@ -276,7 +336,26 @@ enum UIHelpers {
         field.isBezeled = true
         field.bezelStyle = .squareBezel
         field.focusRingType = .none
+        field.isEditable = true
+        field.isSelectable = true
+        field.allowsEditingTextAttributes = false
         field.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    static func styleEditableTextView(_ view: NSTextView) {
+        view.isEditable = true
+        view.isSelectable = true
+        view.allowsUndo = true
+        view.isRichText = false
+        view.usesFontPanel = false
+        view.importsGraphics = false
+    }
+
+    static func styleReadableTextView(_ view: NSTextView) {
+        view.isEditable = false
+        view.isSelectable = true
+        view.allowsUndo = false
+        view.isRichText = false
     }
 
     static func stylePopup(_ popup: NSPopUpButton) {
@@ -305,8 +384,7 @@ enum UIHelpers {
     }
 
     static func configureMetaTextView(_ view: NSTextView, in scroll: NSScrollView) {
-        view.isEditable = false
-        view.isSelectable = true
+        styleReadableTextView(view)
         view.drawsBackground = true
         view.backgroundColor = GrokTheme.fieldInset
         view.textColor = GrokTheme.textSecondary
@@ -432,8 +510,7 @@ enum UIHelpers {
 
     static func metaTextView() -> NSTextView {
         let view = NSTextView()
-        view.isEditable = false
-        view.isSelectable = true
+        styleReadableTextView(view)
         view.drawsBackground = true
         view.backgroundColor = GrokTheme.fieldInset
         view.textColor = GrokTheme.textSecondary

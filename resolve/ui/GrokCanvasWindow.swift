@@ -463,8 +463,12 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         split.spacing = 10
         split.edgeInsets = NSEdgeInsets(top: 0, left: 12, bottom: 8, right: 12)
         split.translatesAutoresizingMaskIntoConstraints = false
-        left.widthAnchor.constraint(equalToConstant: 330).isActive = true
-        right.widthAnchor.constraint(equalToConstant: 240).isActive = true
+        left.widthAnchor.constraint(equalToConstant: 310).isActive = true
+        center.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        center.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        right.widthAnchor.constraint(equalToConstant: 250).isActive = true
+        right.setContentHuggingPriority(.required, for: .horizontal)
+        right.setContentCompressionResistancePriority(.required, for: .horizontal)
         panel.addSubview(split)
         NSLayoutConstraint.activate([
             split.topAnchor.constraint(equalTo: panel.topAnchor),
@@ -612,6 +616,16 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     }
 
     private func buildPromptPanel() -> NSView {
+        let shell = NSView()
+        shell.translatesAutoresizingMaskIntoConstraints = false
+
+        let scroll = NSScrollView()
+        scroll.hasVerticalScroller = true
+        scroll.autohidesScrollers = true
+        scroll.drawsBackground = false
+        scroll.borderType = .noBorder
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+
         let panel = NSView()
         panel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -628,10 +642,10 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         let promptScroll = NSScrollView()
         promptScroll.hasVerticalScroller = true
         UIHelpers.styleScrollView(promptScroll)
+        UIHelpers.styleEditableTextView(promptView)
         promptView.font = GrokTypography.body
         promptView.textColor = GrokTheme.text
         promptView.backgroundColor = GrokTheme.field
-        promptView.isRichText = false
         promptView.textContainerInset = NSSize(width: 8, height: 8)
         promptScroll.documentView = promptView
 
@@ -678,20 +692,42 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         let bridgeImgBtn = UIHelpers.flatButton("Bridge Image", accent: false, target: self, action: #selector(canvasBridgeImage))
         let bridgeVidBtn = UIHelpers.flatButton("Bridge Video", accent: true, target: self, action: #selector(canvasBridgeVideo))
         let bridgePingBtn = UIHelpers.flatButton("Ping", accent: false, target: self, action: #selector(canvasBridgePing))
-        let bridgeRow = NSStackView(views: [imagineOpenBtn, imaginePullBtn, imaginePushBtn, bridgeImgBtn, bridgeVidBtn, bridgePingBtn])
-        bridgeRow.orientation = .horizontal
-        bridgeRow.spacing = 6
-        bridgeRow.translatesAutoresizingMaskIntoConstraints = false
+        let bridgeRow1 = NSStackView(views: [imagineOpenBtn, imaginePullBtn, imaginePushBtn])
+        bridgeRow1.orientation = .horizontal
+        bridgeRow1.spacing = 6
+        bridgeRow1.translatesAutoresizingMaskIntoConstraints = false
+
+        let bridgeRow2 = NSStackView(views: [bridgeImgBtn, bridgeVidBtn, bridgePingBtn])
+        bridgeRow2.orientation = .horizontal
+        bridgeRow2.spacing = 6
+        bridgeRow2.translatesAutoresizingMaskIntoConstraints = false
+
+        let bridgeStack = NSStackView(views: [bridgeRow1, bridgeRow2])
+        bridgeStack.orientation = .vertical
+        bridgeStack.spacing = 6
+        bridgeStack.alignment = .leading
+        bridgeStack.translatesAutoresizingMaskIntoConstraints = false
 
         panel.addSubview(lutNotesLabel)
         panel.addSubview(promptAddField)
         panel.addSubview(continuityLabel)
         panel.addSubview(continuityField)
         panel.addSubview(bridgeLabel)
-        panel.addSubview(bridgeRow)
+        panel.addSubview(bridgeStack)
         panel.addSubview(canvasBridgeStatus)
 
+        scroll.documentView = panel
+        shell.addSubview(scroll)
+
         NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: shell.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: shell.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: shell.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: shell.bottomAnchor),
+            panel.leadingAnchor.constraint(equalTo: scroll.contentView.leadingAnchor),
+            panel.trailingAnchor.constraint(equalTo: scroll.contentView.trailingAnchor),
+            panel.topAnchor.constraint(equalTo: scroll.contentView.topAnchor),
+            panel.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor),
             genreLabel.topAnchor.constraint(equalTo: panel.topAnchor, constant: 4),
             genreLabel.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             groupPopup.topAnchor.constraint(equalTo: genreLabel.bottomAnchor, constant: 4),
@@ -725,14 +761,15 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
             continuityField.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
             bridgeLabel.topAnchor.constraint(equalTo: continuityField.bottomAnchor, constant: 10),
             bridgeLabel.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
-            bridgeRow.topAnchor.constraint(equalTo: bridgeLabel.bottomAnchor, constant: 4),
-            bridgeRow.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
-            canvasBridgeStatus.topAnchor.constraint(equalTo: bridgeRow.bottomAnchor, constant: 4),
+            bridgeStack.topAnchor.constraint(equalTo: bridgeLabel.bottomAnchor, constant: 4),
+            bridgeStack.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            bridgeStack.trailingAnchor.constraint(lessThanOrEqualTo: panel.trailingAnchor),
+            canvasBridgeStatus.topAnchor.constraint(equalTo: bridgeStack.bottomAnchor, constant: 4),
             canvasBridgeStatus.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             canvasBridgeStatus.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
-            canvasBridgeStatus.bottomAnchor.constraint(lessThanOrEqualTo: panel.bottomAnchor, constant: -8),
+            canvasBridgeStatus.bottomAnchor.constraint(equalTo: panel.bottomAnchor, constant: -8),
         ])
-        return panel
+        return shell
     }
 
     private func currentCanvasGenerationOptions() -> (slug: String, prompt: String, duration: Int, resolution: String, aspect: String, lut: String, promptAdd: String) {

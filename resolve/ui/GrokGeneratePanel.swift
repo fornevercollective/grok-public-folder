@@ -216,10 +216,10 @@ final class GeneratePanelController: NSObject, NSWindowDelegate {
         promptScroll.translatesAutoresizingMaskIntoConstraints = false
         promptScroll.hasVerticalScroller = true
         promptScroll.borderType = .bezelBorder
+        UIHelpers.styleEditableTextView(promptView)
         promptView.font = NSFont.systemFont(ofSize: 12)
         promptView.textColor = GrokTheme.text
         promptView.backgroundColor = GrokTheme.field
-        promptView.isRichText = false
         promptView.textContainerInset = NSSize(width: 6, height: 6)
         promptScroll.documentView = promptView
 

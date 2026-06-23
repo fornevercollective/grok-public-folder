@@ -55,8 +55,7 @@ final class TerminalTabController: NSObject {
         logScroll.hasVerticalScroller = true
         logScroll.autohidesScrollers = false
         UIHelpers.styleScrollView(logScroll)
-        logView.isEditable = false
-        logView.isSelectable = true
+        UIHelpers.styleReadableTextView(logView)
         logView.drawsBackground = true
         logView.backgroundColor = GrokTheme.field
         logView.textColor = GrokTheme.textSecondary
