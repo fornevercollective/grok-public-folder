@@ -28,6 +28,9 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     private var selectedPreset: PresetEntry?
     private var selectedMedia: MediaItem?
     private var selectedLut: PresetEntry?
+    private var customLutDisplay: String?
+    private var customLutPrompt: String?
+    private var customLutPosterPath: String?
     private var viewerMode: ViewerMode = .media
     private var playerView: AVPlayerView?
 
@@ -354,6 +357,9 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         let controller = ImdbTabController()
         controller.promptView = promptView
         controller.onSwitchToCanvas = { [weak self] in self?.switchTab("canvas") }
+        controller.onApplyLut = { [weak self] slug, display, promptAdd, lutPrompt, posterPath in
+            self?.applyGeneratedLut(slug: slug, display: display, promptAdd: promptAdd, lutPrompt: lutPrompt, posterPath: posterPath)
+        }
         imdbController = controller
         return controller.buildView()
     }
@@ -777,6 +783,17 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     }
 
     private func updateLutViewer() {
+        if selectedLut == nil, let custom = customLutPrompt, !custom.isEmpty {
+            lutTitle.stringValue = (customLutDisplay ?? "FILM LUT").uppercased()
+            if let path = customLutPosterPath, !path.isEmpty, let image = NSImage(contentsOfFile: path) {
+                lutPreviewView.image = image
+            } else {
+                lutPreviewView.image = nil
+            }
+            lutMetaView.string = custom
+            UIHelpers.scrollMetaToTop(lutMetaView, in: lutMetaScroll)
+            return
+        }
         guard let lut = selectedLut else {
             lutTitle.stringValue = "LUT VIEWER"
             lutPreviewView.image = nil
@@ -785,8 +802,36 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
         }
         lutTitle.stringValue = lut.display.uppercased()
         UIHelpers.loadThumbnail(for: lut, into: lutPreviewView)
-        lutMetaView.string = MediaLibrary.metaLines(for: lut).joined(separator: "\n")
+        var lines = MediaLibrary.metaLines(for: lut)
+        if let custom = customLutPrompt, !custom.isEmpty {
+            lines.append("")
+            lines.append("FILM GRADE")
+            lines.append(custom)
+        }
+        lutMetaView.string = lines.joined(separator: "\n")
         UIHelpers.scrollMetaToTop(lutMetaView, in: lutMetaScroll)
+    }
+
+    func applyGeneratedLut(slug: String, display: String, promptAdd: String, lutPrompt: String, posterPath: String) {
+        customLutDisplay = display
+        customLutPrompt = lutPrompt
+        customLutPosterPath = posterPath
+        promptAddField.stringValue = promptAdd
+        if slug.isEmpty {
+            selectedLut = nil
+            lutPopup.selectItem(at: 0)
+        } else {
+            selectPopupItem(lutPopup, matching: slug)
+            let matchedSlug = (lutPopup.selectedItem?.representedObject as? String) ?? ""
+            if matchedSlug == slug {
+                selectedLut = catalog.lutPresets.first(where: { $0.slug == slug })
+            } else {
+                selectedLut = nil
+                lutPopup.selectItem(at: 0)
+            }
+        }
+        updateLutViewer()
+        switchTab("canvas")
     }
 
     @objc private func loadPressed() {
@@ -874,6 +919,9 @@ final class CanvasWindowController: NSObject, NSWindowDelegate {
     }
 
     @objc private func lutChanged() {
+        customLutDisplay = nil
+        customLutPrompt = nil
+        customLutPosterPath = nil
         let slug = (lutPopup.selectedItem?.representedObject as? String) ?? ""
         if slug.isEmpty {
             selectedLut = nil

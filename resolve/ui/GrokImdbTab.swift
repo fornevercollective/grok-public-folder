@@ -4,6 +4,7 @@ import Foundation
 final class ImdbTabController: NSObject {
     weak var promptView: NSTextView?
     var onSwitchToCanvas: (() -> Void)?
+    var onApplyLut: ((_ slug: String, _ display: String, _ promptAdd: String, _ lutPrompt: String, _ posterPath: String) -> Void)?
 
     private let titleField = NSTextField(string: "")
     private let feelField = NSTextField(string: "")
@@ -15,6 +16,7 @@ final class ImdbTabController: NSObject {
     private let detailScroll = NSScrollView()
     private var selectedId: Int?
     private var results: [MovieSummary] = []
+    private var generateLutButton: NSButton?
 
     func buildView() -> NSView {
         let panel = NSView()
@@ -22,7 +24,7 @@ final class ImdbTabController: NSObject {
         UIHelpers.styleSectionHeading(heading)
 
         let intro = NSTextField(wrappingLabelWithString:
-            "Search by title or creative feel. Pull posters, plot, credits, trivia, trailers, and like-minded films into your Grok prompt."
+            "Search by title or creative feel. Pull posters, plot, credits, trivia, trailers, and like-minded films into your Grok prompt — or Generate LUT to match the film grade on Canvas."
         )
         UIHelpers.styleBodyText(intro)
 
@@ -66,10 +68,12 @@ final class ImdbTabController: NSObject {
         detailView.widthAnchor.constraint(equalTo: detailScroll.contentView.widthAnchor).isActive = true
 
         let addPlot = UIHelpers.flatButton("Add to Prompt", accent: true, target: self, action: #selector(addPromptPressed))
+        let generateLutBtn = UIHelpers.flatButton("Generate LUT", accent: true, target: self, action: #selector(generateLutPressed))
         let addSimilar = UIHelpers.flatButton("Add Similar Films", accent: false, target: self, action: #selector(addSimilarPressed))
         let trailerBtn = UIHelpers.flatButton("Open Trailer", accent: false, target: self, action: #selector(trailerPressed))
         let imdbBtn = UIHelpers.flatButton("Open IMDb", accent: false, target: self, action: #selector(imdbPressed))
-        let actionRow = NSStackView(views: [addPlot, addSimilar, trailerBtn, imdbBtn])
+        generateLutButton = generateLutBtn
+        let actionRow = NSStackView(views: [addPlot, generateLutBtn, addSimilar, trailerBtn, imdbBtn])
         actionRow.orientation = .horizontal
         actionRow.spacing = 6
         actionRow.translatesAutoresizingMaskIntoConstraints = false
@@ -234,6 +238,41 @@ final class ImdbTabController: NSObject {
         let text = MovieBridge.similarPrompt(id)
         guard !text.isEmpty else { return }
         appendPrompt(text)
+    }
+
+    @objc private func generateLutPressed() {
+        guard let id = selectedId else {
+            statusLabel.stringValue = "Select a film first"
+            return
+        }
+        generateLutButton?.isEnabled = false
+        statusLabel.stringValue = "Generating LUT…"
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let response = MovieBridge.generateLut(id)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.generateLutButton?.isEnabled = true
+                if let error = response.error {
+                    self.statusLabel.stringValue = error
+                    return
+                }
+                guard let payload = response.payload,
+                      let promptAdd = payload.promptAdd, !promptAdd.isEmpty else {
+                    self.statusLabel.stringValue = "Generate LUT returned no data"
+                    return
+                }
+                let slug = payload.lutSlug ?? ""
+                let display = payload.lutDisplay ?? "Film LUT"
+                let lutPrompt = payload.lutPrompt ?? promptAdd
+                let poster = payload.posterLocal ?? ""
+                self.onApplyLut?(slug, display, promptAdd, lutPrompt, poster)
+                if slug.isEmpty {
+                    self.statusLabel.stringValue = "LUT generated — applied custom grade on Canvas"
+                } else {
+                    self.statusLabel.stringValue = "LUT generated — matched \(slug) on Canvas"
+                }
+            }
+        }
     }
 
     private func appendPrompt(_ text: String) {

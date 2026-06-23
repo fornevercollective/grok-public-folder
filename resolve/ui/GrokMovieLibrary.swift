@@ -80,6 +80,27 @@ struct MovieStatusResponse: Codable {
     }
 }
 
+struct GenerateLutResponse: Codable {
+    let ok: Bool?
+    let error: String?
+    let lutSlug: String?
+    let lutDisplay: String?
+    let lutPrompt: String?
+    let promptAdd: String?
+    let posterLocal: String?
+    let savedPath: String?
+
+    enum CodingKeys: String, CodingKey {
+        case ok, error
+        case lutSlug = "lut_slug"
+        case lutDisplay = "lut_display"
+        case lutPrompt = "lut_prompt"
+        case promptAdd = "prompt_add"
+        case posterLocal = "poster_local"
+        case savedPath = "saved_path"
+    }
+}
+
 enum MovieBridge {
     static var binURL: URL { GrokPaths.root.appendingPathComponent("bin/imdb") }
 
@@ -138,6 +159,21 @@ enum MovieBridge {
     static func similarPrompt(_ id: Int) -> String {
         let result = run(["similar-prompt", String(id)])
         return result.ok ? result.output : ""
+    }
+
+    static func generateLut(_ id: Int) -> (payload: GenerateLutResponse?, error: String?) {
+        let result = run(["generate-lut", String(id)])
+        guard let data = result.output.data(using: .utf8),
+              let payload = try? JSONDecoder().decode(GenerateLutResponse.self, from: data) else {
+            return (nil, result.output.isEmpty ? "Generate LUT failed" : result.output)
+        }
+        if payload.ok == false {
+            return (nil, payload.error ?? "Generate LUT failed")
+        }
+        if !result.ok, let err = payload.error {
+            return (nil, err)
+        }
+        return (payload, nil)
     }
 
     static func loadPoster(for movie: MovieSummary, into imageView: NSImageView) {

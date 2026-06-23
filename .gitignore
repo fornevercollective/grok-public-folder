@@ -9,6 +9,7 @@ browser/outbox.json
 browser/state.json
 imdb/cache/
 imdb/posters/
+imdb/luts/
 streaming/state.json
 streaming/overlay.json
 streaming/overlay.html

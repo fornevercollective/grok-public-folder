@@ -21,6 +21,26 @@ TMDB_BASE = "https://api.themoviedb.org/3"
 TMDB_IMAGE = "https://image.tmdb.org/t/p/w500"
 CACHE_DIR = IMDB_DIR / "cache"
 POSTER_DIR = IMDB_DIR / "posters"
+LUT_DIR = IMDB_DIR / "luts"
+GENERATE_UI = PROJECT_DIR / "generate-ui.json"
+
+GENRE_LUT_SLUGS: dict[str, str] = {
+    "science fiction": "cyberpunk-neon",
+    "horror": "horror-grain",
+    "crime": "film-noir",
+    "thriller": "film-noir",
+    "mystery": "film-noir",
+    "romance": "kodak-portra-400",
+    "war": "bleach-bypass-lut",
+    "fantasy": "fuji-velvia-50",
+    "comedy": "kodak-gold-200",
+    "drama": "kodak-portra-400",
+    "action": "teal-orange-blockbuster",
+    "adventure": "fuji-eterna-250d",
+    "western": "kodak-gold-200",
+    "documentary": "kodak-tri-x-400-bw",
+    "animation": "fuji-velvia-50",
+}
 
 FEEL_GENRES = {
     "noir": [80, 53],
@@ -61,6 +81,186 @@ def _ensure_dirs() -> None:
     IMDB_DIR.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     POSTER_DIR.mkdir(parents=True, exist_ok=True)
+    LUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _load_lut_catalog() -> list[dict]:
+    if not GENERATE_UI.exists():
+        return []
+    try:
+        data = json.loads(GENERATE_UI.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    return data.get("lut_presets") or []
+
+
+def _slugify_title(title: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    return slug[:40] or "film"
+
+
+def _heuristic_lut_prompt(detail: dict) -> str:
+    title = detail.get("title") or "this film"
+    year = detail.get("year") or ""
+    genres = [g.lower() for g in (detail.get("genres") or [])]
+    keywords = [k.lower() for k in (detail.get("keywords") or [])]
+    haystack = " ".join(genres + keywords)
+    if any(token in haystack for token in ("noir", "crime", "detective", "rain")):
+        return (
+            f"neo-noir color grade inspired by {title} ({year}): crushed blacks, "
+            "sodium-vapor amber highlights, cool blue shadows, high contrast, wet reflective surfaces"
+        )
+    if any(token in haystack for token in ("sci-fi", "science fiction", "cyber", "neon", "future")):
+        return (
+            f"sci-fi neon grade inspired by {title} ({year}): teal shadows, magenta and cyan accents, "
+            "high contrast, bloom on practical lights, night-city atmosphere"
+        )
+    if "horror" in haystack or "ghost" in haystack or "haunted" in haystack:
+        return (
+            f"horror grade inspired by {title} ({year}): desaturated greens, deep crushed blacks, "
+            "cool sickly highlights, heavy grain, low-key lighting"
+        )
+    if "war" in haystack or "battle" in haystack:
+        return (
+            f"bleach-bypass war grade inspired by {title} ({year}): desaturated palette, silvery highlights, "
+            "crushed blacks, high contrast, gritty grain"
+        )
+    if "romance" in haystack or "love" in haystack:
+        return (
+            f"warm romantic grade inspired by {title} ({year}): soft contrast, creamy highlights, "
+            "golden skin tones, gentle saturation, subtle film grain"
+        )
+    return (
+        f"cinematic color grade inspired by {title} ({year}): balanced contrast, natural skin tones, "
+        "theatrical lighting, subtle film grain, cohesive shadow and highlight color"
+    )
+
+
+def _heuristic_lut_slug(detail: dict) -> str:
+    genres = [g.lower() for g in (detail.get("genres") or [])]
+    keywords = [k.lower() for k in (detail.get("keywords") or [])]
+    haystack = " ".join(genres + keywords)
+    for genre, slug in GENRE_LUT_SLUGS.items():
+        if genre in haystack:
+            return slug
+    for genre in genres:
+        if genre in GENRE_LUT_SLUGS:
+            return GENRE_LUT_SLUGS[genre]
+    return ""
+
+
+def _score_lut_preset(preset: dict, detail: dict, lut_prompt: str) -> int:
+    text = " ".join(
+        [
+            lut_prompt,
+            " ".join(detail.get("genres") or []),
+            " ".join(detail.get("keywords") or []),
+            preset.get("slug", ""),
+            preset.get("display", ""),
+            preset.get("best_for", ""),
+            preset.get("notes", ""),
+            preset.get("prompt_preview", ""),
+            " ".join(preset.get("tags") or []),
+        ]
+    ).lower()
+    score = 0
+    for tag in preset.get("tags") or []:
+        token = str(tag).lower()
+        if token and token in text:
+            score += 3
+    slug = str(preset.get("slug", "")).replace("-", " ")
+    if slug and slug in text:
+        score += 4
+    for genre in detail.get("genres") or []:
+        if genre.lower() in text:
+            score += 1
+    return score
+
+
+def _best_lut_slug(catalog: list[dict], detail: dict, lut_prompt: str, fallback: str = "") -> str:
+    if not catalog:
+        return fallback
+    ranked = sorted(
+        ((preset.get("slug") or "", _score_lut_preset(preset, detail, lut_prompt)) for preset in catalog),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+    if ranked and ranked[0][1] > 0:
+        return ranked[0][0]
+    return fallback
+
+
+def _lut_prompt_with_xai(detail: dict) -> tuple[str, str, str]:
+    catalog = _load_lut_catalog()
+    slug_choices = ", ".join(p["slug"] for p in catalog[:36])
+    raw = _xai_chat(
+        f"Film: {detail.get('title')} ({detail.get('year')})\n"
+        f"Genres: {', '.join(detail.get('genres') or [])}\n"
+        f"Keywords: {', '.join(detail.get('keywords') or [])}\n"
+        f"Plot: {(detail.get('plot') or '')[:500]}\n"
+        f"Directors: {', '.join(detail.get('directors') or [])}\n"
+        "Describe the signature color grade / LUT for AI video generation. "
+        "Cover shadows, midtones, highlights, contrast, grain, and mood in 2-4 sentences.",
+        "You are a senior colorist writing LUT briefs for generative video.",
+    )
+    lut_prompt = raw.strip() or _heuristic_lut_prompt(detail)
+    match_raw = _xai_chat(
+        f"LUT brief:\n{lut_prompt}\n\n"
+        f"Available preset slugs:\n{slug_choices}\n\n"
+        'Reply with ONLY JSON: {"best_slug": "slug-or-empty-string", "display_name": "short LUT name"}',
+        "Pick the closest Imagine preset slug from the list, or empty string if none fit.",
+    )
+    best_slug = ""
+    display = f"{detail.get('title')} LUT"
+    try:
+        start = match_raw.find("{")
+        end = match_raw.rfind("}") + 1
+        if start >= 0 and end > start:
+            data = json.loads(match_raw[start:end])
+            best_slug = str(data.get("best_slug") or "").strip()
+            if data.get("display_name"):
+                display = str(data["display_name"]).strip()
+    except json.JSONDecodeError:
+        pass
+    if best_slug and not any(p.get("slug") == best_slug for p in catalog):
+        best_slug = ""
+    if not best_slug:
+        best_slug = _best_lut_slug(catalog, detail, lut_prompt, _heuristic_lut_slug(detail))
+    return lut_prompt, best_slug, display
+
+
+def generate_lut(tmdb_id: int) -> dict:
+    if not _api_key():
+        raise RuntimeError("TMDB_API_KEY is not set — get a free key at https://www.themoviedb.org/settings/api")
+    _ensure_dirs()
+    detail = movie_detail(tmdb_id, download_poster=True)
+    catalog = _load_lut_catalog()
+    display = f"{detail.get('title')} LUT"
+
+    if _xai_key():
+        lut_prompt, best_slug, display = _lut_prompt_with_xai(detail)
+    else:
+        lut_prompt = _heuristic_lut_prompt(detail)
+        best_slug = _best_lut_slug(catalog, detail, lut_prompt, _heuristic_lut_slug(detail))
+
+    slug_part = _slugify_title(detail.get("title") or "film")
+    saved = LUT_DIR / f"{tmdb_id}-{slug_part}.txt"
+    saved.write_text(lut_prompt, encoding="utf-8")
+
+    prompt_add = f"cinematic color grade inspired by {detail.get('title')} ({detail.get('year')}): {lut_prompt}"
+    return {
+        "ok": True,
+        "id": tmdb_id,
+        "title": detail.get("title") or "",
+        "year": detail.get("year") or "",
+        "lut_slug": best_slug,
+        "lut_display": display,
+        "lut_prompt": lut_prompt,
+        "prompt_add": prompt_add,
+        "saved_path": str(saved),
+        "poster_local": detail.get("poster_local") or "",
+        "xai_used": bool(_xai_key()),
+    }
 
 
 def _tmdb_get(path: str, params: dict | None = None) -> dict:
@@ -298,8 +498,8 @@ def add_similar_to_prompt(tmdb_id: int) -> str:
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     if not args or args[0] in {"-h", "--help"}:
-        print("usage: grok_imdb.py <search|feel|detail|similar-prompt|status> [args]")
-        print("env: TMDB_API_KEY (required), XAI_API_KEY (feel + trivia)")
+        print("usage: grok_imdb.py <search|feel|detail|similar-prompt|generate-lut|status> [args]")
+        print("env: TMDB_API_KEY (required), XAI_API_KEY (feel + trivia + generate-lut)")
         return 0
 
     cmd = args[0]
@@ -342,6 +542,10 @@ def main(argv: list[str] | None = None) -> int:
         if cmd == "similar-prompt":
             tmdb_id = int(args[1])
             print(add_similar_to_prompt(tmdb_id))
+            return 0
+        if cmd == "generate-lut":
+            tmdb_id = int(args[1])
+            print(json.dumps(generate_lut(tmdb_id), indent=2))
             return 0
         if cmd == "open-setup":
             example = PROJECT_DIR / "grok-secrets.example.env"

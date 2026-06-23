@@ -63,7 +63,7 @@ SCENES: dict[str, dict] = {
     "imdb": {
         "active": "IMDb",
         "body": "Search title or feel\nResults · Detail · Add to Prompt\nTMDB ✓ · xAI ✓",
-        "buttons": ["Search Title", "Search Feel", "Setup Keys"],
+        "buttons": ["Search Title", "Generate LUT", "Setup Keys"],
     },
     "stream": {
         "active": "Stream",
