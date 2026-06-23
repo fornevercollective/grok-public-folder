@@ -8,6 +8,7 @@
 <img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 49 PM" src="https://github.com/user-attachments/assets/b1f015b7-8633-4a73-a678-d54de66cd07f" />
 <img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 53 PM" src="https://github.com/user-attachments/assets/679b5f73-3753-4188-8b6b-4a1c196a245f" />
 <img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 22 56 PM" src="https://github.com/user-attachments/assets/a816e7b4-2cf0-481e-b65b-6c4b85e87cee" />
+<img width="1359" height="946" alt="Screenshot 2026-06-22 at 5 27 38 PM" src="https://github.com/user-attachments/assets/dba2cd03-7845-438a-9015-73d73b9dce9d" />
 
 # grok-public-folder
 
